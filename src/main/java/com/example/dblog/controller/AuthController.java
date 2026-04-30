@@ -6,6 +6,7 @@ import com.example.dblog.repository.BasicInfoRepository;
 import com.example.dblog.repository.UserRepository;
 import javax.imageio.ImageIO;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +25,13 @@ public class AuthController {
 
     private final UserRepository userRepo;
     private final BasicInfoRepository basicInfoRepo;
+    private final StringRedisTemplate redis;
 
-    public AuthController(UserRepository userRepo, BasicInfoRepository basicInfoRepo) {
+    public AuthController(UserRepository userRepo, BasicInfoRepository basicInfoRepo,
+                          StringRedisTemplate redis) {
         this.userRepo = userRepo;
         this.basicInfoRepo = basicInfoRepo;
+        this.redis = redis;
     }
 
     @GetMapping("/captcha")
@@ -96,6 +100,16 @@ public class AuthController {
         @SuppressWarnings("unchecked")
         Map<String, Object> u = (Map<String, Object>) user;
         return ResponseEntity.ok(Map.of("loggedIn", true, "uid", u.get("uid"), "account", u.get("account")));
+    }
+
+    @GetMapping("/maintenance")
+    public ResponseEntity<?> maintenance() {
+        try {
+            String val = redis.opsForValue().get("dblog:maintenance");
+            return ResponseEntity.ok(Map.of("enabled", "1".equals(val)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("enabled", false));
+        }
     }
 
     @PostMapping("/logout")

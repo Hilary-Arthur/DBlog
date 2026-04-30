@@ -43,7 +43,6 @@
     .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 0.88rem; z-index: 500; display: none; }
     .toast.error { background: var(--red); }
 
-    /* 登录表单 */
     .login-box { max-width: 380px; margin: 80px auto 0; background: #fff; border-radius: 12px; padding: 32px 28px; border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,.06); }
     .login-box h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; text-align: center; }
     .form-group { margin-bottom: 14px; }
@@ -55,6 +54,27 @@
     .btn-submit:hover { background: #0f172a; }
     .login-box .back-link { display: block; text-align: center; margin-top: 14px; font-size: 0.82rem; color: var(--text-secondary); text-decoration: none; }
     .login-box .back-link:hover { color: var(--accent); }
+
+    /* 维护模式卡片 */
+    .maintenance-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+    .maintenance-info h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+    .maintenance-info p { font-size: 0.82rem; color: var(--text-secondary); }
+
+    /* ── 滑动开关 ── */
+    .toggle-wrapper { display: flex; align-items: center; gap: 12px; }
+    .toggle-text { font-size: 0.88rem; font-weight: 600; user-select: none; transition: color .25s; }
+    .toggle-text-on { color: #94a3b8; }
+    .toggle-text-off { color: #64748b; }
+    .toggle-text-on.active { color: var(--green); }
+    .toggle-text-off.active { color: #64748b; }
+
+    .toggle { position: relative; display: inline-block; width: 52px; height: 28px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track { position: absolute; inset: 0; background: #cbd5e1; border-radius: 14px; cursor: pointer; transition: background .25s; }
+    .toggle-knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: transform .25s cubic-bezier(.4,0,.2,1); box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+    .toggle input:checked + .toggle-track { background: var(--green); }
+    .toggle input:checked + .toggle-track .toggle-knob { transform: translateX(24px); }
+    .toggle-track:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
@@ -68,7 +88,6 @@
     </div>
   </nav>
 
-  <!-- 登录表单（未登录时显示） -->
   <div class="login-box" id="loginBox" style="display:none">
     <h2>管理员登录</h2>
     <form id="loginForm" autocomplete="off">
@@ -86,8 +105,23 @@
     <a href="/" class="back-link">返回首页</a>
   </div>
 
-  <!-- 审核面板（已登录时显示） -->
   <div class="container" id="reviewPanel" style="display:none">
+    <div class="maintenance-card">
+      <div class="maintenance-info">
+        <h4>维护模式</h4>
+        <p id="maintStatus">加载中...</p>
+      </div>
+      <div class="toggle-wrapper">
+        <span class="toggle-text toggle-text-on" id="toggleLabelOn">开启</span>
+        <label class="toggle">
+          <input type="checkbox" id="maintToggle">
+          <span class="toggle-track">
+            <span class="toggle-knob"></span>
+          </span>
+        </label>
+        <span class="toggle-text toggle-text-off" id="toggleLabelOff">关闭</span>
+      </div>
+    </div>
     <div class="page-header">
       <h2>内容审核</h2>
       <span class="badge" id="pendingCount">0 篇待审</span>
@@ -104,15 +138,27 @@
     var reviewPanel = document.getElementById('reviewPanel');
     var navRight = document.getElementById('navRight');
     var loginError = document.getElementById('loginError');
+    var maintToggle = document.getElementById('maintToggle');
+    var toggleLabelOn = document.getElementById('toggleLabelOn');
+    var toggleLabelOff = document.getElementById('toggleLabelOff');
+    var maintStatus = document.getElementById('maintStatus');
 
-    // 检查管理员登录状态
-    fetch('/api/admin/me').then(function(r) { return r.json(); }).then(function(data) {
-      if (data.loggedIn) {
-        showReviewPanel(data.account);
-      } else {
-        showLoginForm();
-      }
-    });
+    checkLogin();
+
+    function checkLogin() {
+      fetch('/api/admin/me')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.loggedIn) {
+            showReviewPanel(data.account);
+          } else {
+            showLoginForm();
+          }
+        })
+        .catch(function() {
+          showLoginForm();
+        });
+    }
 
     function showLoginForm() {
       loginBox.style.display = 'block';
@@ -123,15 +169,18 @@
     function showReviewPanel(account) {
       loginBox.style.display = 'none';
       reviewPanel.style.display = 'block';
-      navRight.innerHTML = '<span style="font-size:0.85rem;color:var(--text-secondary);">'+esc(account)+'</span>' +
+      navRight.innerHTML =
+        '<span style="font-size:0.85rem;color:var(--text-secondary);">' + esc(account) + '</span>' +
         '<button class="btn-logout" id="btnLogout">退出</button>';
       document.getElementById('btnLogout').addEventListener('click', function() {
-        fetch('/api/admin/logout', { method: 'POST' }).then(function() { window.location.href = '/'; });
+        fetch('/api/admin/logout', { method: 'POST' })
+          .then(function() { window.location.href = '/'; })
+          .catch(function() { window.location.href = '/'; });
       });
+      refreshMaintenance();
       loadPending();
     }
 
-    // 登录表单
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
       loginError.style.display = 'none';
@@ -153,60 +202,134 @@
         } else {
           showErr(loginError, data.msg);
         }
+      })
+      .catch(function() {
+        showErr(loginError, '网络错误，请检查服务是否正常运行');
       });
     });
 
     function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
 
+    // ── 维护模式滑动开关 ──
+    function refreshMaintenance() {
+      fetch('/api/admin/maintenance')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            maintToggle.checked = d.enabled;
+            updateToggleUI(d.enabled);
+          }
+        })
+        .catch(function() {
+          maintStatus.textContent = '当前状态：无法获取（Redis 可能未启动）';
+        });
+    }
+
+    function updateToggleUI(enabled) {
+      if (enabled) {
+        toggleLabelOn.classList.add('active');
+        toggleLabelOff.classList.remove('active');
+        maintStatus.textContent = '当前状态：已开启（所有页面重定向至维护页）';
+      } else {
+        toggleLabelOn.classList.remove('active');
+        toggleLabelOff.classList.add('active');
+        maintStatus.textContent = '当前状态：关闭';
+      }
+    }
+
+    maintToggle.addEventListener('change', function() {
+      var newState = maintToggle.checked;
+      fetch('/api/admin/maintenance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newState })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          updateToggleUI(d.enabled);
+          showToast(newState ? '维护模式已开启' : '维护模式已关闭');
+        } else {
+          maintToggle.checked = !newState;
+          showToast(d.msg || '操作失败', true);
+        }
+      })
+      .catch(function() {
+        maintToggle.checked = !newState;
+        showToast('操作失败，请检查 Redis 服务', true);
+      });
+    });
+
     // ── 审核功能 ──
     function loadPending() {
-      fetch('/api/admin/pending').then(function(r) { return r.json(); }).then(function(data) {
-        var list = document.getElementById('reviewList');
-        if (!data.ok && data.msg === '无权限') {
-          list.innerHTML = '<div class="empty" style="color:#dc2626;">无管理员权限</div>';
-          return;
-        }
-        if (!data.ok || !data.posts || data.posts.length === 0) {
-          list.innerHTML = '<div class="empty">暂无待审核的文章</div>';
-          document.getElementById('pendingCount').textContent = '0 篇待审';
-          return;
-        }
-        document.getElementById('pendingCount').textContent = data.posts.length + ' 篇待审';
-        list.innerHTML = data.posts.map(function(p) {
-          return '<div class="review-card" id="post-'+p.pid+'">' +
-            '<div class="review-meta"><span>'+esc(p.author)+'</span><span class="dot"></span><span>'+esc(p.createdAt)+'</span></div>' +
-            '<div class="review-title">'+esc(p.title)+'</div>' +
-            '<div class="review-content">'+esc(p.content)+'</div>' +
-            '<div class="review-actions">' +
-              '<button class="btn-approve" onclick="approve('+p.pid+')">通过</button>' +
-              '<button class="btn-reject" onclick="reject('+p.pid+')">驳回</button>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-      });
+      fetch('/api/admin/pending')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var list = document.getElementById('reviewList');
+          if (!data.ok && data.msg === '无权限') {
+            list.innerHTML = '<div class="empty" style="color:#dc2626;">无管理员权限</div>';
+            return;
+          }
+          if (!data.ok || !data.posts || data.posts.length === 0) {
+            list.innerHTML = '<div class="empty">暂无待审核的文章</div>';
+            document.getElementById('pendingCount').textContent = '0 篇待审';
+            return;
+          }
+          document.getElementById('pendingCount').textContent = data.posts.length + ' 篇待审';
+          list.innerHTML = data.posts.map(function(p) {
+            return '<div class="review-card" id="post-' + p.pid + '">' +
+              '<div class="review-meta"><span>' + esc(p.author) + '</span><span class="dot"></span><span>' + esc(p.createdAt) + '</span></div>' +
+              '<div class="review-title">' + esc(p.title) + '</div>' +
+              '<div class="review-content">' + esc(p.content) + '</div>' +
+              '<div class="review-actions">' +
+                '<button class="btn-approve" data-pid="' + p.pid + '">通过</button>' +
+                '<button class="btn-reject" data-pid="' + p.pid + '">驳回</button>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+
+          // 用事件代理绑定按钮
+          list.querySelectorAll('.btn-approve').forEach(function(btn) {
+            btn.addEventListener('click', function() { approve(parseInt(this.dataset.pid)); });
+          });
+          list.querySelectorAll('.btn-reject').forEach(function(btn) {
+            btn.addEventListener('click', function() { reject(parseInt(this.dataset.pid)); });
+          });
+        })
+        .catch(function() {
+          document.getElementById('reviewList').innerHTML = '<div class="empty" style="color:#dc2626;">加载失败，请检查服务状态</div>';
+        });
     }
 
     function approve(pid) {
-      fetch('/api/admin/posts/'+pid+'/approve', { method: 'PUT' }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.ok) {
-          showToast('已通过');
-          var card = document.getElementById('post-'+pid);
-          if (card) card.style.opacity = '0.4';
-          setTimeout(function() { card && card.remove(); updateCount(); }, 400);
-        } else { showToast(d.msg, true); }
-      });
+      var card = document.getElementById('post-' + pid);
+      fetch('/api/admin/posts/' + pid + '/approve', { method: 'PUT' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            showToast('已通过');
+            if (card) { card.style.opacity = '0.4'; }
+            setTimeout(function() { if (card) { card.remove(); updateCount(); } }, 400);
+          } else { showToast(d.msg, true); }
+        })
+        .catch(function() { showToast('操作失败', true); });
     }
+
     function reject(pid) {
-      fetch('/api/admin/posts/'+pid+'/reject', { method: 'PUT' }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.ok) {
-          showToast('已驳回');
-          var card = document.getElementById('post-'+pid);
-          if (card) card.style.opacity = '0.4';
-          setTimeout(function() { card && card.remove(); updateCount(); }, 400);
-        } else { showToast(d.msg, true); }
-      });
+      var card = document.getElementById('post-' + pid);
+      fetch('/api/admin/posts/' + pid + '/reject', { method: 'PUT' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            showToast('已驳回');
+            if (card) { card.style.opacity = '0.4'; }
+            setTimeout(function() { if (card) { card.remove(); updateCount(); } }, 400);
+          } else { showToast(d.msg, true); }
+        })
+        .catch(function() { showToast('操作失败', true); });
     }
+
     function updateCount() {
       var list = document.getElementById('reviewList');
       var cards = list.querySelectorAll('.review-card');
@@ -217,6 +340,7 @@
         document.getElementById('pendingCount').textContent = cards.length + ' 篇待审';
       }
     }
+
     function showToast(msg, isError) {
       var t = document.getElementById('toast');
       t.textContent = msg;

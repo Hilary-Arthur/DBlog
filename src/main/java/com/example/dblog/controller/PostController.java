@@ -65,21 +65,20 @@ public class PostController {
         Long uid = getUid(session);
 
         List<Long> pids = new ArrayList<>();
-        List<Map<String, Object>> posts = pageResult.getContent().stream()
-                .map(r -> {
-                    Long pid = r.getPost().getPid();
-                    pids.add(pid);
-                    return new HashMap<>(Map.of(
-                            "pid", pid,
-                            "title", r.getPost().getTitle(),
-                            "content", r.getPost().getContent(),
-                            "author", r.getPost().getAuthor().getAccount(),
-                            "createdAt", r.getPost().getCreatedAt() != null
-                                    ? r.getPost().getCreatedAt().toString().substring(0, 10) : "",
-                            "likeCount", likeService.getLikeCount(pid)
-                    ));
-                })
-                .collect(Collectors.toList());
+        List<Map<String, Object>> posts = new ArrayList<>();
+        for (var r : pageResult.getContent()) {
+            Long pid = r.getPost().getPid();
+            pids.add(pid);
+            Map<String, Object> m = new HashMap<>();
+            m.put("pid", pid);
+            m.put("title", r.getPost().getTitle());
+            m.put("content", r.getPost().getContent());
+            m.put("author", r.getPost().getAuthor().getAccount());
+            m.put("createdAt", r.getPost().getCreatedAt() != null
+                    ? r.getPost().getCreatedAt().toString().substring(0, 10) : "");
+            m.put("likeCount", likeService.getLikeCount(pid));
+            posts.add(m);
+        }
 
         // 当前用户已赞的文章
         Set<Long> likedPids = uid != null ? likeService.getLikedPids(uid, pids) : Set.of();

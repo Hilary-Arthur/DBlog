@@ -70,8 +70,10 @@ public class ProfileController {
                         "pid", r.getPost().getPid(),
                         "title", r.getPost().getTitle(),
                         "content", r.getPost().getContent(),
+                        "author", r.getPost().getAuthor().getAccount(),
                         "status", r.getStatus(),
-                        "createdAt", r.getPost().getCreatedAt() != null ? r.getPost().getCreatedAt().toString() : ""
+                        "createdAt", r.getPost().getCreatedAt() != null
+                                ? r.getPost().getCreatedAt().toString().substring(0, 10) : ""
                 ))
                 .collect(Collectors.toList());
 

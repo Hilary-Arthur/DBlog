@@ -4,556 +4,235 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DBlog - 博客</title>
-  <style>
-    :root {
-      --primary: #1e293b;
-      --accent: #0ea5e9;
-      --bg: #f8fafc;
-      --card-bg: #fff;
-      --text: #1e293b;
-      --text-secondary: #64748b;
-      --border: #e2e8f0;
-      --radius: 8px;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── 顶部导航 ── */
-    .navbar { background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-    .navbar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; }
-    .nav-left { display: flex; align-items: center; gap: 28px; }
-    .logo { font-size: 1.3rem; font-weight: 700; color: var(--primary); text-decoration: none; letter-spacing: -.3px; }
-    .nav-links { display: flex; gap: 4px; }
-    .nav-links a { text-decoration: none; color: var(--text-secondary); padding: 6px 14px; border-radius: 6px; font-size: 0.88rem; transition: all .15s; }
-    .nav-links a:hover, .nav-links a.active { color: var(--primary); background: #f1f5f9; }
-    .nav-right { display: flex; align-items: center; gap: 16px; position: relative; }
-
-    /* 用户区域 */
-    .user-area { position: relative; }
-    .user-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background .15s; }
-    .user-trigger:hover { background: #f1f5f9; }
-    .avatar { width: 32px; height: 32px; border-radius: 6px; background: #334155; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.82rem; }
-    .username { font-size: 0.88rem; font-weight: 500; color: var(--text); }
-    .arrow { font-size: 0.6rem; color: var(--text-secondary); transition: transform .2s; margin-left: -2px; }
-    .user-trigger.open .arrow { transform: rotate(180deg); }
-
-    /* 下拉菜单 */
-    .dropdown {
-      position: absolute; top: calc(100% + 6px); right: 0; background: #fff;
-      border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.1);
-      min-width: 160px; padding: 6px; display: none; z-index: 200;
-    }
-    .dropdown.show { display: block; }
-    .dropdown-item {
-      display: block; width: 100%; padding: 9px 14px; border: none; background: none;
-      text-align: left; font-size: 0.88rem; color: var(--text); border-radius: 6px;
-      cursor: pointer; transition: background .1s; text-decoration: none;
-    }
-    .dropdown-item:hover { background: #f1f5f9; }
-    .dropdown-item.danger { color: #dc2626; }
-
-    .btn-login {
-      background: var(--primary); color: #fff; border: none; padding: 8px 18px;
-      border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      transition: all .15s;
-    }
-    .btn-login:hover { background: #0f172a; }
-
-    /* ── 主布局 ── */
-    .main-layout { max-width: 1200px; margin: 0 auto; display: flex; gap: 32px; padding: 28px 24px; }
-    .content { flex: 1; min-width: 0; }
-    .section-title { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; }
-    .btn-create {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: var(--primary); color: #fff; border: none; padding: 9px 18px;
-      border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      transition: all .15s; text-decoration: none;
-    }
-    .btn-create:hover { background: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,41,59,.3); }
-    .btn-create .plus { font-size: 1.15rem; line-height: 1; }
-
-    .post-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .post-card { background: var(--card-bg); padding: 22px 24px; transition: background .15s; }
-    .post-card:hover { background: #fafbfc; }
-    .post-card + .post-card { border-top: 1px solid var(--border); }
-    .post-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.78rem; color: var(--text-secondary); }
-    .post-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: #cbd5e1; }
-    .post-tag { background: #f1f5f9; color: #475569; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
-    .post-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
-    .post-title a { color: inherit; text-decoration: none; }
-    .post-title a:hover { color: var(--accent); }
-    .post-excerpt { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .post-footer { display: flex; align-items: center; gap: 18px; margin-top: 12px; font-size: 0.8rem; color: var(--text-secondary); }
-    .post-footer span { display: flex; align-items: center; gap: 4px; }
-
-    /* 侧栏 */
-    .sidebar { width: 300px; flex-shrink: 0; }
-    .sidebar-card { background: var(--card-bg); border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--border); margin-bottom: 16px; }
-    .sidebar-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; color: var(--primary); }
-    .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; text-decoration: none; transition: all .15s; }
-    .tag:hover { background: var(--accent); color: #fff; }
-    .category-list { list-style: none; }
-    .category-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f9fafb; font-size: 0.88rem; }
-    .category-list li:last-child { border-bottom: none; }
-    .category-count { color: var(--text-secondary); font-size: 0.8rem; }
-
-    /* ── 模态框 ── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 300;
-      display: flex; align-items: center; justify-content: center; display: none;
-      backdrop-filter: blur(2px);
-    }
-    .modal-overlay.show { display: flex; }
-    .modal {
-      background: #fff; border-radius: 14px; width: 400px; max-width: 94vw;
-      box-shadow: 0 20px 60px rgba(0,0,0,.2); overflow: hidden;
-    }
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 20px 24px 0;
-    }
-    .modal-header h2 { font-size: 1.15rem; font-weight: 700; }
-    .modal-close {
-      width: 32px; height: 32px; border: none; background: #f1f5f9;
-      border-radius: 8px; font-size: 1rem; cursor: pointer; color: var(--text-secondary);
-      display: flex; align-items: center; justify-content: center; transition: all .15s;
-    }
-    .modal-close:hover { background: #e2e8f0; color: var(--text); }
-    .modal-body { padding: 20px 24px 24px; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
-    .form-group input {
-      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
-      font-size: 0.9rem; transition: border-color .15s; outline: none;
-    }
-    .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
-    .captcha-row { display: flex; gap: 10px; }
-    .captcha-row input { flex: 1; }
-    .captcha-img { height: 42px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); }
-    .form-error { color: #dc2626; font-size: 0.8rem; margin-top: 4px; display: none; }
-    .btn-submit {
-      width: 100%; padding: 11px; background: var(--primary); color: #fff; border: none;
-      border-radius: 8px; font-size: 0.92rem; font-weight: 600; cursor: pointer;
-      transition: all .15s; margin-top: 4px;
-    }
-    .btn-submit:hover { background: #0f172a; }
-    .modal-footer-text { text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-secondary); }
-    .modal-footer-text a { color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 500; }
-    .modal-footer-text a:hover { text-decoration: underline; }
-
-    @media (max-width: 768px) {
-      .main-layout { flex-direction: column; }
-      .sidebar { width: 100%; }
-      .nav-links { display: none; }
-    }
-
-    /* 页脚 */
-    .footer { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.78rem; position: relative; }
-    .admin-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #cbd5e1; cursor: default; vertical-align: middle; margin-left: 6px; transition: all .3s; }
-    .admin-dot:hover { background: var(--text-secondary); width: auto; height: auto; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; color: #94a3b8; cursor: pointer; }
-    .admin-dot:hover::after { content: '管理'; }
-
-    /* 分页 */
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 24px; }
-    .page-btn { min-width: 36px; height: 36px; padding: 0 10px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 0.85rem; color: var(--text); cursor: pointer; transition: all .15s; }
-    .page-btn:hover:not(.active):not(:disabled) { border-color: var(--accent); color: var(--accent); }
-    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .page-btn:disabled { opacity: 0.4; cursor: default; }
-    .page-info { font-size: 0.82rem; color: var(--text-secondary); margin: 0 8px; }
-
-  </style>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DBlog 自定义 -->
+  <link href="/css/index.css" rel="stylesheet">
+  <!-- DBlog 通用博客卡片 -->
+  <link href="/css/post-card.css" rel="stylesheet">
 </head>
 <body>
 
+<div id="app">
+
   <!-- ═══ 顶部导航 ═══ -->
-  <nav class="navbar">
-    <div class="navbar-inner">
-      <div class="nav-left">
-        <a href="/" class="logo">DBlog</a>
-        <div class="nav-links">
-          <a href="/" class="active">首页</a>
-          <a href="#">技术</a>
-          <a href="#">随笔</a>
-          <a href="#">关于</a>
-        </div>
-      </div>
-      <div class="nav-right">
-        <a href="/editor.html" class="btn-create" id="btnCreate" title="写文章">
-          <span class="plus">+</span> 写博客
-        </a>
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container-xl px-3">
+      <a class="navbar-brand fs-5" href="/">DBlog</a>
 
-        <!-- 已登录 -->
-        <div class="user-area" id="userArea" style="display:none">
-          <div class="user-trigger" id="userTrigger">
-            <div class="avatar" id="avatarLetter">H</div>
-            <span class="username" id="displayName">Hilary</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="dropdown" id="dropdown">
-            <a href="/profile.html" class="dropdown-item">个人主页</a>
-            <hr style="border:none;border-top:1px solid var(--border);margin:4px 0;">
-            <button class="dropdown-item danger" id="btnLogout">退出登录</button>
-          </div>
-        </div>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-        <!-- 未登录 -->
-        <button class="btn-login" id="btnLogin" style="display:none">登录</button>
+      <div class="collapse navbar-collapse" id="navLinks">
+        <ul class="navbar-nav me-auto gap-1">
+          <li class="nav-item"><a class="nav-link active" href="/">首页</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">技术</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">随笔</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">关于</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <!-- 写博客按钮 -->
+          <a href="/editor.html" class="btn btn-dark btn-sm rounded-3 fw-semibold btn-create-post">
+            <span style="font-size:1.15rem;line-height:1;">+</span> 写博客
+          </a>
+
+          <!-- 已登录 -->
+          <div class="dropdown" v-if="loggedIn">
+            <div class="d-flex align-items-center gap-2 user-dropdown px-2 py-1 rounded-2"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+              <div class="avatar-sm">{{ avatarLetter }}</div>
+              <span class="d-none d-md-inline" style="font-size:0.88rem;font-weight:500;">{{ account }}</span>
+            </div>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/profile.html">个人主页</a></li>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li><button class="dropdown-item text-danger" @click="doLogout">退出登录</button></li>
+            </ul>
+          </div>
+
+          <!-- 未登录 -->
+          <button class="btn btn-dark btn-sm rounded-3 fw-semibold px-3" v-if="!loggedIn" @click="openLogin">登录</button>
+        </div>
       </div>
     </div>
   </nav>
 
   <!-- ═══ 主体 ═══ -->
-  <div class="main-layout">
-    <main class="content">
-      <h2 class="section-title">最新文章</h2>
-      <div class="post-list" id="postList">
-        <div class="post-card" style="text-align:center;color:var(--text-secondary);padding:40px;">加载中...</div>
-      </div>
-      <div class="pagination" id="pagination"></div>
-    </main>
+  <div class="container-xl px-3 py-4">
+    <div class="row g-4">
+      <!-- 文章列表 -->
+      <main class="col-lg-8">
+        <h2 class="fs-5 fw-bold mb-3">最新文章</h2>
 
-    <aside class="sidebar">
-      <div class="sidebar-card">
-        <h3 class="sidebar-title">归档</h3>
-        <ul class="category-list" id="archiveList">
-          <li><span style="color:var(--text-secondary);">加载中...</span></li>
-        </ul>
-      </div>
-      <div class="sidebar-card">
-        <h3 class="sidebar-title">标签</h3>
-        <div class="tag-cloud">
-          <a href="#" class="tag">Spring Boot</a>
-          <a href="#" class="tag">Java</a>
-          <a href="#" class="tag">REST API</a>
-          <a href="#" class="tag">开源</a>
-          <a href="#" class="tag">远程办公</a>
-          <a href="#" class="tag">性能优化</a>
+        <!-- 加载中 -->
+        <div v-if="loading" class="text-center text-secondary py-5">加载中...</div>
+
+        <!-- 空状态 -->
+        <div v-else-if="posts.length === 0" class="text-center text-secondary py-5">
+          还没有文章，<a href="/editor.html" style="color:var(--dblog-accent);">写一篇</a>吧
         </div>
-      </div>
-    </aside>
+
+        <!-- 文章列表 -->
+        <div v-else class="post-list">
+          <post-card v-for="(p, idx) in posts" :key="p.pid" :post="p" @like="likePost($event, idx)"></post-card>
+        </div>
+
+        <!-- 分页 -->
+        <nav v-if="showPagination" class="mt-4">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" :class="{ disabled: currentPage <= 1 }">
+              <a class="page-link" href="#" @click.prevent="currentPage > 1 && loadPosts(currentPage - 1)">&laquo;</a>
+            </li>
+            <li v-for="p in pageNumbers" :key="p" class="page-item" :class="{ active: p === currentPage }">
+              <a class="page-link" href="#" @click.prevent="loadPosts(p)">{{ p }}</a>
+            </li>
+            <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+              <a class="page-link" href="#" @click.prevent="currentPage < totalPages && loadPosts(currentPage + 1)">&raquo;</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link border-0 bg-transparent" style="font-size:0.82rem;color:var(--dblog-text-secondary);">共 {{ totalPages }} 页</span></li>
+          </ul>
+        </nav>
+      </main>
+
+      <!-- 侧栏 -->
+      <aside class="col-lg-4">
+        <div class="sidebar-card mb-3">
+          <h3 class="sidebar-title mb-3">归档</h3>
+          <ul class="list-unstyled mb-0 archive-list">
+            <li v-if="archives.length === 0" style="color:var(--dblog-text-secondary);">暂无文章</li>
+            <li v-for="m in archives" :key="m.label">
+              <span>{{ m.label }}</span>
+              <span class="archive-count">{{ m.count }} 篇</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-card">
+          <h3 class="sidebar-title mb-3">标签</h3>
+          <div class="tag-cloud">
+            <a href="#" class="badge py-1 px-2">Spring Boot</a>
+            <a href="#" class="badge py-1 px-2">Java</a>
+            <a href="#" class="badge py-1 px-2">REST API</a>
+            <a href="#" class="badge py-1 px-2">开源</a>
+            <a href="#" class="badge py-1 px-2">远程办公</a>
+            <a href="#" class="badge py-1 px-2">性能优化</a>
+          </div>
+        </div>
+      </aside>
+    </div>
   </div>
 
   <!-- ═══ 页脚（含隐藏管理入口） ═══ -->
-  <footer class="footer">
-    &copy; 2026 DBlog<span class="admin-dot" id="adminDot" title=""></span>
+  <footer class="text-center py-3" style="font-size:0.78rem;color:var(--dblog-text-secondary);">
+    &copy; 2026 DBlog<span class="admin-dot" @click="openAdmin" title=""></span>
   </footer>
 
+  <!-- ═══ 模态框 backdrop ═══ -->
+  <div v-if="showLoginModal || showRegisterModal || showAdminModal" class="modal-backdrop fade show" @click="closeModals"></div>
+
   <!-- ═══ 登录弹窗 ═══ -->
-  <div class="modal-overlay" id="loginOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>登录</h2>
-        <button class="modal-close" id="loginClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <form id="loginForm" autocomplete="off">
-          <div class="form-group">
-            <label>账号</label>
-            <input type="text" id="loginAccount" placeholder="请输入账号" required>
+  <div class="modal fade" :class="{ 'show d-block': showLoginModal }" tabindex="-1" @click.self="closeModals">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 rounded-4 shadow-lg">
+        <div class="modal-header border-0 px-4 pt-4">
+          <h2 class="modal-title fs-5 fw-bold">登录</h2>
+          <button type="button" class="btn-close" @click="closeModals"></button>
+        </div>
+        <div class="modal-body px-4 pb-4">
+          <form @submit.prevent="doLogin" autocomplete="off">
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;">账号</label>
+              <input type="text" class="form-control" v-model="loginAccount" placeholder="请输入账号" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
+              <input type="password" class="form-control" v-model="loginPassword" placeholder="请输入密码" required>
+            </div>
+            <div v-if="loginError" class="text-danger mb-3" style="font-size:0.8rem;">{{ loginError }}</div>
+            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">登 录</button>
+          </form>
+          <div class="text-center mt-3" style="font-size:0.85rem;color:var(--dblog-text-secondary);">
+            还没有账号？<a href="#" @click.prevent="switchToRegister" style="color:var(--dblog-accent);">立即注册</a>
           </div>
-          <div class="form-group">
-            <label>密码</label>
-            <input type="password" id="loginPassword" placeholder="请输入密码" required>
-          </div>
-          <div class="form-error" id="loginError"></div>
-          <button type="submit" class="btn-submit">登 录</button>
-        </form>
-        <div class="modal-footer-text">
-          还没有账号？<a id="goRegister">立即注册</a>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ═══ 注册弹窗 ═══ -->
-  <div class="modal-overlay" id="registerOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>注册</h2>
-        <button class="modal-close" id="registerClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <form id="registerForm" autocomplete="off">
-          <div class="form-group">
-            <label>账号</label>
-            <input type="text" id="regAccount" placeholder="3-20个字符" required>
-          </div>
-          <div class="form-group">
-            <label>密码</label>
-            <input type="password" id="regPassword" placeholder="至少6位密码" required>
-          </div>
-          <div class="form-group">
-            <label>验证码</label>
-            <div class="captcha-row">
-              <input type="text" id="regCaptcha" placeholder="请输入验证码" maxlength="4" required>
-              <img class="captcha-img" id="captchaImg" src="/api/captcha" alt="验证码" title="点击刷新">
+  <div class="modal fade" :class="{ 'show d-block': showRegisterModal }" tabindex="-1" @click.self="closeModals">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 rounded-4 shadow-lg">
+        <div class="modal-header border-0 px-4 pt-4">
+          <h2 class="modal-title fs-5 fw-bold">注册</h2>
+          <button type="button" class="btn-close" @click="closeModals"></button>
+        </div>
+        <div class="modal-body px-4 pb-4">
+          <form @submit.prevent="doRegister" autocomplete="off">
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;">账号</label>
+              <input type="text" class="form-control" v-model="regAccount" placeholder="3-20个字符" required>
             </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
+              <input type="password" class="form-control" v-model="regPassword" placeholder="至少6位密码" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;">验证码</label>
+              <div class="d-flex gap-2">
+                <input type="text" class="form-control" v-model="regCaptcha" placeholder="请输入验证码" maxlength="4" required>
+                <img :src="captchaSrc" alt="验证码" class="captcha-img" @click="refreshCaptcha" title="点击刷新">
+              </div>
+            </div>
+            <div v-if="registerError" class="text-danger mb-3" style="font-size:0.8rem;">{{ registerError }}</div>
+            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">注 册</button>
+          </form>
+          <div class="text-center mt-3" style="font-size:0.85rem;color:var(--dblog-text-secondary);">
+            已有账号？<a href="#" @click.prevent="switchToLogin" style="color:var(--dblog-accent);">去登录</a>
           </div>
-          <div class="form-error" id="registerError"></div>
-          <button type="submit" class="btn-submit">注 册</button>
-        </form>
-        <div class="modal-footer-text">
-          已有账号？<a id="goLogin">去登录</a>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ═══ 管理员登录弹窗 ═══ -->
-  <div class="modal-overlay" id="adminOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>管理员登录</h2>
-        <button class="modal-close" id="adminClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <form id="adminLoginForm" autocomplete="off">
-          <div class="form-group">
-            <label>管理员账号</label>
-            <input type="text" id="adminAccount" placeholder="请输入管理员账号" required>
-          </div>
-          <div class="form-group">
-            <label>密码</label>
-            <input type="password" id="adminPassword" placeholder="请输入密码" required>
-          </div>
-          <div class="form-error" id="adminError"></div>
-          <button type="submit" class="btn-submit">登 录</button>
-        </form>
+  <div class="modal fade" :class="{ 'show d-block': showAdminModal }" tabindex="-1" @click.self="showAdminModal = false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 rounded-4 shadow-lg">
+        <div class="modal-header border-0 px-4 pt-4">
+          <h2 class="modal-title fs-5 fw-bold">管理员登录</h2>
+          <button type="button" class="btn-close" @click="showAdminModal = false"></button>
+        </div>
+        <div class="modal-body px-4 pb-4">
+          <form @submit.prevent="doAdminLogin" autocomplete="off">
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;">管理员账号</label>
+              <input type="text" class="form-control" v-model="adminAccount" placeholder="请输入管理员账号" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
+              <input type="password" class="form-control" v-model="adminPassword" placeholder="请输入密码" required>
+            </div>
+            <div v-if="adminError" class="text-danger mb-3" style="font-size:0.8rem;">{{ adminError }}</div>
+            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">登 录</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // ── DOM 引用 ──
-    var userArea = document.getElementById('userArea');
-    var btnLogin = document.getElementById('btnLogin');
-    var avatarLetter = document.getElementById('avatarLetter');
-    var displayName = document.getElementById('displayName');
-    var dropdown = document.getElementById('dropdown');
-    var userTrigger = document.getElementById('userTrigger');
+</div>
 
-    var loginOverlay = document.getElementById('loginOverlay');
-    var registerOverlay = document.getElementById('registerOverlay');
-    var loginError = document.getElementById('loginError');
-    var registerError = document.getElementById('registerError');
-
-    // ── 下拉菜单 ──
-    userTrigger.addEventListener('click', function(e) {
-      e.stopPropagation();
-      dropdown.classList.toggle('show');
-      userTrigger.classList.toggle('open');
-    });
-    document.addEventListener('click', function() {
-      dropdown.classList.remove('show');
-      userTrigger.classList.remove('open');
-    });
-
-    // ── 模态框切换 ──
-    function showLogin() { loginOverlay.classList.add('show'); registerOverlay.classList.remove('show'); }
-    function showRegister() { registerOverlay.classList.add('show'); loginOverlay.classList.remove('show'); refreshCaptcha(); }
-    function closeModals() { loginOverlay.classList.remove('show'); registerOverlay.classList.remove('show'); }
-
-    document.getElementById('btnLogin').addEventListener('click', showLogin);
-    document.getElementById('loginClose').addEventListener('click', closeModals);
-    document.getElementById('registerClose').addEventListener('click', closeModals);
-    document.getElementById('goRegister').addEventListener('click', showRegister);
-    document.getElementById('goLogin').addEventListener('click', showLogin);
-    loginOverlay.addEventListener('click', function(e) { if (e.target === loginOverlay) closeModals(); });
-    registerOverlay.addEventListener('click', function(e) { if (e.target === registerOverlay) closeModals(); });
-
-    // ── 验证码 ──
-    function refreshCaptcha() {
-      document.getElementById('captchaImg').src = '/api/captcha?t=' + Date.now();
-    }
-    document.getElementById('captchaImg').addEventListener('click', refreshCaptcha);
-
-    // ── 登录 ──
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      loginError.style.display = 'none';
-      var account = document.getElementById('loginAccount').value.trim();
-      var password = document.getElementById('loginPassword').value;
-      if (!account || !password) { showErr(loginError, '请填写账号和密码'); return; }
-
-      fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: account, password: password })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.ok) {
-          closeModals();
-          setLoggedIn(data.account);
-          document.getElementById('loginAccount').value = '';
-          document.getElementById('loginPassword').value = '';
-        } else {
-          showErr(loginError, data.msg);
-        }
-      });
-    });
-
-    // ── 注册 ──
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      registerError.style.display = 'none';
-      var account = document.getElementById('regAccount').value.trim();
-      var password = document.getElementById('regPassword').value;
-      var captcha = document.getElementById('regCaptcha').value.trim();
-      if (!account || !password || !captcha) { showErr(registerError, '请填写所有字段'); return; }
-
-      fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: account, password: password, captcha: captcha })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.ok) {
-          closeModals();
-          setLoggedIn(data.account);
-          document.getElementById('regAccount').value = '';
-          document.getElementById('regPassword').value = '';
-          document.getElementById('regCaptcha').value = '';
-        } else {
-          showErr(registerError, data.msg);
-          refreshCaptcha();
-        }
-      });
-    });
-
-    // ── 退出 ──
-    document.getElementById('btnLogout').addEventListener('click', function() {
-      fetch('/api/logout', { method: 'POST' }).then(function() { setLoggedOut(); });
-    });
-
-    // ── 状态切换 ──
-    function setLoggedIn(account) {
-      userArea.style.display = 'block';
-      btnLogin.style.display = 'none';
-      avatarLetter.textContent = account.charAt(0).toUpperCase();
-      displayName.textContent = account;
-    }
-    function setLoggedOut() {
-      userArea.style.display = 'none';
-      btnLogin.style.display = 'block';
-      dropdown.classList.remove('show');
-    }
-    function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-
-    // ── 初始化：检查登录状态 ──
-    fetch('/api/user/me')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.loggedIn) { setLoggedIn(data.account); }
-        else { setLoggedOut(); }
-      });
-
-    // ── 加载文章列表 ──
-    function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-    // ── 隐藏管理入口 ──
-    var adminOverlay = document.getElementById('adminOverlay');
-    var adminError = document.getElementById('adminError');
-
-    document.getElementById('adminDot').addEventListener('click', function() {
-      adminOverlay.classList.add('show');
-    });
-    document.getElementById('adminClose').addEventListener('click', function() {
-      adminOverlay.classList.remove('show');
-    });
-    adminOverlay.addEventListener('click', function(e) {
-      if (e.target === adminOverlay) adminOverlay.classList.remove('show');
-    });
-
-    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      adminError.style.display = 'none';
-      var account = document.getElementById('adminAccount').value.trim();
-      var password = document.getElementById('adminPassword').value;
-      if (!account || !password) { showErr(adminError, '请填写账号和密码'); return; }
-
-      fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: account, password: password })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.ok) {
-          window.location.href = '/admin.html';
-        } else {
-          showErr(adminError, data.msg);
-        }
-      });
-    });
-
-    // ── 加载文章列表（分页） ──
-    var currentPage = 1;
-
-    function loadPosts(page) {
-      currentPage = page;
-      var list = document.getElementById('postList');
-      list.innerHTML = '<div class="post-card" style="text-align:center;color:var(--text-secondary);padding:40px;">加载中...</div>';
-
-      fetch('/api/posts?page=' + page)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (!data.ok || !data.posts || data.posts.length === 0) {
-            list.innerHTML = '<div class="post-card" style="text-align:center;color:var(--text-secondary);padding:40px;">还没有文章，<a href="/editor.html" style="color:var(--accent);">写一篇</a>吧</div>';
-            document.getElementById('pagination').innerHTML = '';
-            return;
-          }
-          list.innerHTML = data.posts.map(function(p) {
-            var snippet = (p.content||'').replace(/<[^>]*>/g,'').substring(0, 150);
-            return '<article class="post-card">' +
-              '<div class="post-meta"><span>' + esc(p.createdAt) + '</span><span class="dot"></span><span>' + esc(p.author) + '</span></div>' +
-              '<h3 class="post-title"><a href="#">' + esc(p.title) + '</a></h3>' +
-              '<p class="post-excerpt">' + esc(snippet) + '</p>' +
-              '</article>';
-          }).join('');
-          renderPagination(data.totalPages, data.currentPage, data.total);
-        });
-    }
-
-    function renderPagination(totalPages, page, total) {
-      var pg = document.getElementById('pagination');
-      if (total <= 6) { pg.innerHTML = ''; return; }
-
-      var html = '';
-      html += '<button class="page-btn" onclick="loadPosts(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>&laquo;</button>';
-
-      for (var i = 1; i <= totalPages; i++) {
-        html += '<button class="page-btn' + (i === page ? ' active' : '') + '" onclick="loadPosts(' + i + ')">' + i + '</button>';
-      }
-
-      html += '<button class="page-btn" onclick="loadPosts(' + (page + 1) + ')"' + (page >= totalPages ? ' disabled' : '') + '>&raquo;</button>';
-      html += '<span class="page-info">共 ' + total + ' 篇</span>';
-      pg.innerHTML = html;
-    }
-
-    loadPosts(1);
-
-    // ── 加载归档统计 ──
-    fetch('/api/posts/stats')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var list = document.getElementById('archiveList');
-        if (!data.ok || !data.months || data.months.length === 0) {
-          list.innerHTML = '<li><span style="color:var(--text-secondary);">暂无文章</span></li>';
-          return;
-        }
-        list.innerHTML = data.months.map(function(m) {
-          return '<li><span>' + esc(m.label) + '</span><span class="category-count">' + m.count + ' 篇</span></li>';
-        }).join('');
-      });
-  </script>
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Vue 3 -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<!-- DBlog 通用博客卡片组件 -->
+<script src="/js/post-card.js"></script>
+<!-- DBlog 首页逻辑 -->
+<script src="/js/index.js"></script>
 
 </body>
 </html>

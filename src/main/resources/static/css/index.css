@@ -1,0 +1,68 @@
+/* ═══ DBlog 首页 — Bootstrap 5 覆盖样式 ═══ */
+:root {
+  --dblog-dark: #1e293b;
+  --dblog-accent: #0ea5e9;
+  --dblog-text-secondary: #64748b;
+  --dblog-border: #e2e8f0;
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif; background: #f8fafc; }
+
+/* ── 导航栏 ── */
+.navbar { background: #fff; border-bottom: 1px solid var(--dblog-border); }
+.navbar-brand { font-weight: 700; letter-spacing: -0.3px; color: var(--dblog-dark) !important; }
+.nav-link { color: var(--dblog-text-secondary) !important; font-size: 0.9rem; border-radius: 6px; padding: 6px 14px !important; }
+.nav-link:hover, .nav-link.active { color: var(--dblog-dark) !important; background: #f1f5f9; }
+
+.btn-create-post {
+  font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+}
+
+/* ── 用户下拉 ── */
+.user-dropdown { cursor: pointer; }
+.avatar-sm {
+  width: 32px; height: 32px; border-radius: 6px; background: #334155; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.82rem;
+}
+.dropdown-menu { border: 1px solid var(--dblog-border); border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.1); padding: 6px; min-width: 150px; }
+.dropdown-item { border-radius: 6px; font-size: 0.88rem; padding: 9px 14px; }
+.dropdown-item.text-danger:hover { background: #fef2f2; }
+
+
+/* ── 分页 ── */
+.page-link { color: var(--dblog-dark); border-radius: 6px !important; margin: 0 2px; min-width: 36px; text-align: center; }
+.page-link:hover { color: var(--dblog-accent); }
+.page-item.active .page-link { background: var(--dblog-dark); border-color: var(--dblog-dark); }
+.page-item.disabled .page-link { opacity: 0.4; }
+
+/* ── 侧栏 ── */
+.sidebar-card { background: #fff; border-radius: 8px; padding: 18px 20px; border: 1px solid var(--dblog-border); }
+.sidebar-title { font-size: 0.9rem; font-weight: 700; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; color: var(--dblog-dark); }
+.tag-cloud .badge { font-size: 0.78rem; font-weight: 500; background: #f1f5f9; color: #475569; text-decoration: none; transition: all .15s; margin: 2px; }
+.tag-cloud .badge:hover { background: var(--dblog-accent); color: #fff; }
+.archive-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f9fafb; font-size: 0.88rem; }
+.archive-list li:last-child { border-bottom: none; }
+.archive-count { color: var(--dblog-text-secondary); font-size: 0.8rem; }
+
+/* ── 验证码 ── */
+.captcha-img { height: 42px; border-radius: 8px; cursor: pointer; border: 1px solid var(--dblog-border); }
+
+/* ── 页脚管理入口 ── */
+.admin-dot {
+  display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #cbd5e1;
+  cursor: default; vertical-align: middle; margin-left: 6px; transition: all .3s;
+}
+.admin-dot:hover {
+  background: var(--dblog-text-secondary); width: auto; height: auto;
+  padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; color: #94a3b8; cursor: pointer;
+}
+.admin-dot:hover::after { content: '管理'; }
+
+/* ── Toast ── */
+.dblog-toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;
+  background: #059669; color: #fff; padding: 10px 24px; border-radius: 8px;
+  font-size: 0.88rem; box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  transition: opacity .3s; pointer-events: none;
+}
+.dblog-toast.error { background: #dc2626; }

@@ -4,454 +4,162 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人主页 - DBlog</title>
-  <style>
-    :root {
-      --primary: #1e293b; --accent: #0ea5e9; --bg: #f8fafc; --card-bg: #fff;
-      --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --radius: 8px;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-
-    /* 导航栏 */
-    .navbar { background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-    .navbar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; }
-    .nav-left { display: flex; align-items: center; gap: 28px; }
-    .logo { font-size: 1.3rem; font-weight: 700; color: var(--primary); text-decoration: none; letter-spacing: -.3px; }
-    .nav-links { display: flex; gap: 4px; }
-    .nav-links a { text-decoration: none; color: var(--text-secondary); padding: 6px 14px; border-radius: 6px; font-size: 0.88rem; transition: all .15s; }
-    .nav-links a:hover, .nav-links a.active { color: var(--primary); background: #f1f5f9; }
-    .nav-right { display: flex; align-items: center; gap: 16px; position: relative; }
-
-    .user-area { position: relative; }
-    .user-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background .15s; }
-    .user-trigger:hover { background: #f1f5f9; }
-    .avatar { width: 32px; height: 32px; border-radius: 6px; background: #334155; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.82rem; }
-    .username { font-size: 0.88rem; font-weight: 500; }
-    .arrow { font-size: 0.6rem; color: var(--text-secondary); transition: transform .2s; }
-    .user-trigger.open .arrow { transform: rotate(180deg); }
-    .dropdown { position: absolute; top: calc(100% + 6px); right: 0; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.1); min-width: 160px; padding: 6px; display: none; z-index: 200; }
-    .dropdown.show { display: block; }
-    .dropdown-item { display: block; width: 100%; padding: 9px 14px; border: none; background: none; text-align: left; font-size: 0.88rem; color: var(--text); border-radius: 6px; cursor: pointer; transition: background .1s; text-decoration: none; }
-    .dropdown-item:hover { background: #f1f5f9; }
-    .dropdown-item.danger { color: #dc2626; }
-    .btn-login { background: var(--primary); color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
-
-    /* 主布局 */
-    .container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
-
-    /* 个人资料卡片 */
-    .profile-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 28px; }
-    .profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-    .profile-header h2 { font-size: 1.15rem; font-weight: 700; }
-    .btn-edit {
-      padding: 7px 16px; border: 1px solid var(--border); background: #fff; border-radius: 6px;
-      font-size: 0.85rem; cursor: pointer; color: var(--text-secondary); transition: all .15s;
-    }
-    .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
-    .info-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
-    }
-    .info-item label { display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px; }
-    .info-item .val { font-size: 0.95rem; color: var(--text); padding: 8px 0; }
-    .info-item input {
-      width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
-      font-size: 0.9rem; outline: none; display: none;
-    }
-    .info-item input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
-    .info-item.edit-mode .val { display: none; }
-    .info-item.edit-mode input { display: block; }
-    .btn-row { display: none; gap: 10px; margin-top: 20px; }
-    .btn-save { padding: 8px 22px; background: var(--primary); color: #fff; border: none; border-radius: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
-    .btn-save:hover { background: #0f172a; }
-    .btn-cancel { padding: 8px 22px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 0.88rem; cursor: pointer; color: var(--text-secondary); }
-    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #059669; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 0.88rem; z-index: 500; display: none; }
-
-    /* 博客列表 */
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .section-title { font-size: 1.1rem; font-weight: 700; }
-    .btn-batch-delete { padding: 6px 14px; border: 1px solid #dc2626; background: #fff; color: #dc2626; border-radius: 6px; font-size: 0.82rem; cursor: pointer; transition: all .15s; }
-    .btn-batch-delete:hover { background: #fef2f2; }
-    .btn-batch-cancel { padding: 6px 14px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 0.82rem; cursor: pointer; color: var(--text-secondary); margin-left: 8px; }
-    .btn-confirm-delete { padding: 6px 14px; background: #dc2626; color: #fff; border: none; border-radius: 6px; font-size: 0.82rem; cursor: pointer; transition: all .15s; }
-    .btn-confirm-delete:hover { background: #b91c1c; }
-    .btn-confirm-delete:disabled { opacity: 0.5; cursor: default; }
-    .post-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .post-card { background: var(--card-bg); padding: 20px 24px; display: flex; gap: 12px; align-items: flex-start; }
-    .post-card + .post-card { border-top: 1px solid var(--border); }
-    .post-checkbox { display: none; width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; accent-color: #dc2626; cursor: pointer; }
-    .post-checkbox.show { display: block; }
-    .post-body { flex: 1; min-width: 0; }
-    .post-date { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; }
-    .post-title { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
-    .post-snippet { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .empty { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 0.9rem; }
-    .status-tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 8px; }
-    .status-PENDING { background: #fef3c7; color: #92400e; }
-    .status-APPROVED { background: #d1fae5; color: #065f46; }
-    .status-REJECTED { background: #fee2e2; color: #991b1b; }
-
-    /* 删除确认弹窗 */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 300;
-      display: flex; align-items: center; justify-content: center; display: none;
-      backdrop-filter: blur(2px);
-    }
-    .modal-overlay.show { display: flex; }
-    .modal {
-      background: #fff; border-radius: 14px; width: 400px; max-width: 94vw;
-      box-shadow: 0 20px 60px rgba(0,0,0,.2); overflow: hidden;
-    }
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 0;
-    }
-    .modal-header h2 { font-size: 1.1rem; font-weight: 700; }
-    .modal-close {
-      width: 32px; height: 32px; border: none; background: #f1f5f9;
-      border-radius: 8px; font-size: 1rem; cursor: pointer; color: var(--text-secondary);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .modal-close:hover { background: #e2e8f0; }
-    .modal-body { padding: 18px 24px 24px; }
-    .modal-body .warn-text { font-size: 0.92rem; color: #dc2626; margin-bottom: 16px; font-weight: 600; }
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; }
-    .form-group input {
-      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
-      font-size: 0.9rem; outline: none; transition: border-color .15s;
-    }
-    .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
-    .form-error { color: #dc2626; font-size: 0.8rem; margin-bottom: 8px; display: none; }
-    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
-    .btn-primary { flex: 1; padding: 10px; background: #dc2626; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
-    .btn-primary:hover { background: #b91c1c; }
-    .btn-secondary { flex: 1; padding: 10px; background: #fff; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; cursor: pointer; }
-    .btn-secondary:hover { background: #f1f5f9; }
-  </style>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DBlog 自定义 -->
+  <link href="/css/profile.css" rel="stylesheet">
+  <!-- DBlog 通用博客卡片 -->
+  <link href="/css/post-card.css" rel="stylesheet">
 </head>
 <body>
 
-  <!-- 导航栏 -->
-  <nav class="navbar">
-    <div class="navbar-inner">
-      <div class="nav-left">
-        <a href="/" class="logo">DBlog</a>
-        <div class="nav-links">
-          <a href="/">首页</a>
-          <a href="#">技术</a>
-          <a href="#">随笔</a>
-          <a href="#">关于</a>
-        </div>
-      </div>
-      <div class="nav-right">
-        <div class="user-area" id="userArea" style="display:none">
-          <div class="user-trigger" id="userTrigger">
-            <div class="avatar" id="avatarLetter">H</div>
-            <span class="username" id="displayName">Hilary</span>
-            <span class="arrow">▼</span>
+<div id="app">
+
+  <!-- ═══ 顶部导航 ═══ -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container-xl px-3">
+      <a class="navbar-brand fs-5" href="/">DBlog</a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navLinks">
+        <ul class="navbar-nav me-auto gap-1">
+          <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/profile.html">个人主页</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-3">
+          <div class="dropdown" v-if="loggedIn">
+            <div class="d-flex align-items-center gap-2 user-dropdown px-2 py-1 rounded-2"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+              <div class="avatar-sm">{{ avatarLetter }}</div>
+              <span class="d-none d-md-inline" style="font-size:0.88rem;font-weight:500;">{{ account }}</span>
+            </div>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/profile.html">个人主页</a></li>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li><button class="dropdown-item text-danger" @click="doLogout">退出登录</button></li>
+            </ul>
           </div>
-          <div class="dropdown" id="dropdown">
-            <a href="/profile.html" class="dropdown-item">个人主页</a>
-            <hr style="border:none;border-top:1px solid var(--border);margin:4px 0;">
-            <button class="dropdown-item danger" id="btnLogout">退出登录</button>
-          </div>
         </div>
-        <button class="btn-login" id="btnLogin" style="display:none">登录</button>
       </div>
     </div>
   </nav>
 
-  <!-- 主体 -->
-  <div class="container">
-    <!-- 个人资料 -->
-    <div class="profile-card">
-      <div class="profile-header">
-        <h2>个人资料</h2>
-        <button class="btn-edit" id="btnEdit">编辑</button>
-      </div>
-      <div class="info-grid">
-        <div class="info-item" data-field="account">
-          <label>账号</label>
-          <div class="val" id="valAccount">-</div>
-          <input id="inpAccount" disabled>
-        </div>
-        <div class="info-item edit-item" data-field="uname">
-          <label>昵称</label>
-          <div class="val" id="valUname">-</div>
-          <input id="inpUname" placeholder="输入昵称">
-        </div>
-        <div class="info-item edit-item" data-field="tel">
-          <label>手机号码</label>
-          <div class="val" id="valTel">-</div>
-          <input id="inpTel" placeholder="输入手机号码">
-        </div>
-        <div class="info-item edit-item" data-field="email">
-          <label>邮箱</label>
-          <div class="val" id="valEmail">-</div>
-          <input id="inpEmail" placeholder="输入邮箱地址">
-        </div>
-      </div>
-      <div class="btn-row" id="btnRow">
-        <button class="btn-save" id="btnSave">保存</button>
-        <button class="btn-cancel" id="btnCancel">取消</button>
-      </div>
-    </div>
+  <!-- ═══ 主体 ═══ -->
+  <div class="container-xl px-3 py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
 
-    <!-- 我的文章 -->
-    <div class="section-header">
-      <h3 class="section-title">我的文章</h3>
-      <div>
-        <button class="btn-confirm-delete" id="btnConfirmDelete" style="display:none">删除已选 (<span id="selectedCount">0</span>)</button>
-        <button class="btn-batch-cancel" id="btnBatchCancel" style="display:none">取消</button>
-        <button class="btn-batch-delete" id="btnBatchDelete">批量删除</button>
+        <!-- 个人资料 -->
+        <div class="profile-card mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="fs-5 fw-bold mb-0">个人资料</h2>
+            <button class="btn btn-sm" :class="editing ? 'btn-outline-secondary' : 'btn-outline-primary'" @click="toggleEdit">
+              {{ editing ? '取消编辑' : '编辑' }}
+            </button>
+          </div>
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label" style="font-size:0.78rem;color:var(--dblog-text-secondary);">账号</label>
+              <div v-if="!editing" class="py-2" style="font-size:0.95rem;">{{ account }}</div>
+              <input v-else type="text" class="form-control" :value="account" disabled>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label" style="font-size:0.78rem;color:var(--dblog-text-secondary);">昵称</label>
+              <div v-if="!editing" class="py-2" style="font-size:0.95rem;">{{ profile.uname || '-' }}</div>
+              <input v-else type="text" class="form-control" v-model="editForm.uname" placeholder="输入昵称">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label" style="font-size:0.78rem;color:var(--dblog-text-secondary);">手机号码</label>
+              <div v-if="!editing" class="py-2" style="font-size:0.95rem;">{{ profile.tel || '-' }}</div>
+              <input v-else type="text" class="form-control" v-model="editForm.tel" placeholder="输入手机号码">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label" style="font-size:0.78rem;color:var(--dblog-text-secondary);">邮箱</label>
+              <div v-if="!editing" class="py-2" style="font-size:0.95rem;">{{ profile.email || '-' }}</div>
+              <input v-else type="text" class="form-control" v-model="editForm.email" placeholder="输入邮箱地址">
+            </div>
+          </div>
+          <div v-if="editing" class="d-flex gap-2 mt-3">
+            <button class="btn btn-dark btn-sm px-4 fw-semibold" @click="saveProfile">保存</button>
+            <button class="btn btn-outline-secondary btn-sm px-4" @click="cancelEdit">取消</button>
+          </div>
+        </div>
+
+        <!-- 我的文章 -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h3 class="fs-5 fw-bold mb-0">我的文章</h3>
+          <div class="d-flex gap-2">
+            <template v-if="selecting">
+              <button class="btn btn-danger btn-sm" @click="openDeleteModal">删除已选 ({{ selectedCount }})</button>
+              <button class="btn btn-outline-secondary btn-sm" @click="cancelSelecting">取消</button>
+            </template>
+            <button v-else class="btn btn-outline-danger btn-sm" @click="startSelecting" v-if="posts.length > 0">批量删除</button>
+          </div>
+        </div>
+
+        <!-- 文章列表 -->
+        <div v-if="posts.length === 0" class="text-center text-secondary py-5">还没有发布过文章</div>
+        <div v-else class="post-list">
+          <post-card v-for="p in posts" :key="p.pid" :post="p">
+            <template #before>
+              <input type="checkbox" v-if="selecting" :value="p.pid" @change="toggleCheck(p.pid)"
+                     style="width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:#dc2626;cursor:pointer;">
+            </template>
+            <template #meta-after>
+              <span class="status-tag ms-2" :class="'status-' + p.status">{{ statusMap[p.status] || p.status }}</span>
+            </template>
+            <template #footer></template>
+          </post-card>
+        </div>
+
       </div>
     </div>
-    <div class="post-list" id="postList"><div class="empty">加载中...</div></div>
   </div>
 
-  <!-- 删除确认弹窗 -->
-  <div class="modal-overlay" id="deleteOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>确认删除</h2>
-        <button class="modal-close" id="deleteClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="warn-text" id="deleteWarn">已选择 0 篇文章，确认要删除吗？</div>
-        <div class="form-group">
-          <label>请输入密码以确认</label>
-          <input type="password" id="deletePassword" placeholder="输入登录密码">
+  <!-- ═══ Toast ═══ -->
+  <div v-if="toastVisible" class="position-fixed top-0 start-50 translate-middle-x mt-3 z-3 bg-success"
+       style="color:#fff;padding:10px 24px;border-radius:8px;font-size:0.88rem;box-shadow:0 4px 16px rgba(0,0,0,.15);">
+    {{ toastMsg }}
+  </div>
+
+  <!-- ═══ 删除确认弹窗 ═══ -->
+  <div v-if="showDeleteModal" class="modal-backdrop fade show" @click="showDeleteModal = false"></div>
+  <div class="modal fade" :class="{ 'show d-block': showDeleteModal }" tabindex="-1" @click.self="showDeleteModal = false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 rounded-4 shadow-lg">
+        <div class="modal-header border-0 px-4 pt-4">
+          <h2 class="modal-title fs-5 fw-bold">确认删除</h2>
+          <button type="button" class="btn-close" @click="showDeleteModal = false"></button>
         </div>
-        <div class="form-error" id="deleteError"></div>
-        <div class="modal-actions">
-          <button class="btn-secondary" id="deleteCancel">取消</button>
-          <button class="btn-primary" id="deleteConfirm">确认删除</button>
+        <div class="modal-body px-4 pb-4">
+          <p class="text-danger fw-semibold mb-3" style="font-size:0.92rem;">已选择 {{ selectedCount }} 篇文章，确认要删除吗？</p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:0.85rem;">请输入密码以确认</label>
+            <input type="password" class="form-control" v-model="deletePassword" placeholder="输入登录密码">
+          </div>
+          <div v-if="deleteError" class="text-danger mb-3" style="font-size:0.8rem;">{{ deleteError }}</div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary flex-grow-1" @click="showDeleteModal = false">取消</button>
+            <button class="btn btn-danger flex-grow-1 fw-semibold" @click="confirmDelete" :disabled="deleting">
+              {{ deleting ? '删除中...' : '确认删除' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+</div>
 
-  <script>
-    var userArea = document.getElementById('userArea');
-    var btnLogin = document.getElementById('btnLogin');
-    var avatarLetter = document.getElementById('avatarLetter');
-    var displayName = document.getElementById('displayName');
-    var dropdown = document.getElementById('dropdown');
-
-    // ── 状态 ──
-    var loggedIn = false, currentUid = null;
-
-    // 检查登录
-    fetch('/api/user/me').then(function(r) { return r.json(); }).then(function(data) {
-      if (data.loggedIn) { loggedIn = true; currentUid = data.uid; setLoggedIn(data.account); loadProfile(); loadPosts(); }
-      else { setLoggedOut(); window.location.href = '/'; }
-    });
-
-    function setLoggedIn(account) {
-      userArea.style.display = 'block'; btnLogin.style.display = 'none';
-      avatarLetter.textContent = account.charAt(0).toUpperCase();
-      displayName.textContent = account;
-    }
-    function setLoggedOut() {
-      userArea.style.display = 'none'; btnLogin.style.display = 'block';
-    }
-
-    // 下拉菜单
-    document.getElementById('userTrigger').addEventListener('click', function(e) {
-      e.stopPropagation(); dropdown.classList.toggle('show'); this.classList.toggle('open');
-    });
-    document.addEventListener('click', function() { dropdown.classList.remove('show'); document.getElementById('userTrigger').classList.remove('open'); });
-    document.getElementById('btnLogout').addEventListener('click', function() {
-      fetch('/api/logout', { method: 'POST' }).then(function() { window.location.href = '/'; });
-    });
-
-    // ── 个人资料 ──
-    function loadProfile() {
-      fetch('/api/user/profile').then(function(r) { return r.json(); }).then(function(d) {
-        if (d.ok) {
-          document.getElementById('valAccount').textContent = displayName.textContent;
-          document.getElementById('inpAccount').value = displayName.textContent;
-          var fields = ['uname','tel','email'];
-          fields.forEach(function(f) {
-            document.getElementById('val'+f[0].toUpperCase()+f.slice(1)).textContent = d[f] || '-';
-            document.getElementById('inp'+f[0].toUpperCase()+f.slice(1)).value = d[f] || '';
-          });
-        }
-      });
-    }
-
-    var editing = false;
-    document.getElementById('btnEdit').addEventListener('click', function() {
-      editing = !editing;
-      document.querySelectorAll('.edit-item').forEach(function(el) { el.classList.toggle('edit-mode', editing); });
-      document.getElementById('btnRow').style.display = editing ? 'flex' : 'none';
-      this.textContent = editing ? '取消编辑' : '编辑';
-    });
-    document.getElementById('btnCancel').addEventListener('click', function() {
-      editing = false;
-      document.querySelectorAll('.edit-item').forEach(function(el) { el.classList.remove('edit-mode'); });
-      document.getElementById('btnRow').style.display = 'none';
-      document.getElementById('btnEdit').textContent = '编辑';
-      loadProfile();
-    });
-    document.getElementById('btnSave').addEventListener('click', function() {
-      var body = {
-        uname: document.getElementById('inpUname').value.trim(),
-        tel: document.getElementById('inpTel').value.trim(),
-        email: document.getElementById('inpEmail').value.trim()
-      };
-      fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.ok) {
-          editing = false;
-          document.querySelectorAll('.edit-item').forEach(function(el) { el.classList.remove('edit-mode'); });
-          document.getElementById('btnRow').style.display = 'none';
-          document.getElementById('btnEdit').textContent = '编辑';
-          loadProfile();
-          showToast('保存成功');
-        }
-      });
-    });
-
-    function showToast(msg) {
-      var t = document.getElementById('toast');
-      t.textContent = msg; t.style.display = 'block';
-      setTimeout(function() { t.style.display = 'none'; }, 2000);
-    }
-
-    // ── 我的文章 ──
-    var selecting = false;
-    var allPosts = [];
-
-    function loadPosts() {
-      fetch('/api/user/posts').then(function(r) { return r.json(); }).then(function(d) {
-        var list = document.getElementById('postList');
-        if (!d.ok || !d.posts || d.posts.length === 0) {
-          list.innerHTML = '<div class="empty">还没有发布过文章</div>';
-          document.getElementById('btnBatchDelete').style.display = 'none';
-          return;
-        }
-        allPosts = d.posts;
-        document.getElementById('btnBatchDelete').style.display = 'inline-block';
-        renderPosts();
-      });
-    }
-
-    function renderPosts() {
-      var list = document.getElementById('postList');
-      list.innerHTML = allPosts.map(function(p) {
-        var date = p.createdAt ? p.createdAt.substring(0, 10) : '';
-        var snippet = p.content ? p.content.replace(/<[^>]*>/g, '').substring(0, 150) : '';
-        var statusMap = { PENDING: '审核中', APPROVED: '已通过', REJECTED: '已驳回' };
-        var statusText = statusMap[p.status] || p.status;
-        return '<div class="post-card">' +
-          '<input type="checkbox" class="post-checkbox'+(selecting?' show':'')+'" value="'+p.pid+'" onchange="updateSelectedCount()">' +
-          '<div class="post-body">' +
-            '<div class="post-date">'+date+'<span class="status-tag status-'+esc(p.status)+'">'+statusText+'</span></div>' +
-            '<div class="post-title">'+esc(p.title)+'</div>' +
-            '<div class="post-snippet">'+esc(snippet)+'</div>' +
-          '</div></div>';
-      }).join('');
-    }
-
-    function getSelectedPids() {
-      var boxes = document.querySelectorAll('.post-checkbox:checked');
-      return Array.from(boxes).map(function(cb) { return parseInt(cb.value); });
-    }
-
-    function updateSelectedCount() {
-      document.getElementById('selectedCount').textContent = getSelectedPids().length;
-    }
-
-    // 批量删除按钮
-    document.getElementById('btnBatchDelete').addEventListener('click', function() {
-      selecting = true;
-      this.style.display = 'none';
-      document.getElementById('btnConfirmDelete').style.display = 'inline-block';
-      document.getElementById('btnBatchCancel').style.display = 'inline-block';
-      renderPosts();
-    });
-
-    // 取消选择
-    document.getElementById('btnBatchCancel').addEventListener('click', function() {
-      selecting = false;
-      document.getElementById('btnBatchDelete').style.display = 'inline-block';
-      document.getElementById('btnConfirmDelete').style.display = 'none';
-      this.style.display = 'none';
-      renderPosts();
-    });
-
-    // 确认删除 → 弹窗
-    document.getElementById('btnConfirmDelete').addEventListener('click', function() {
-      var pids = getSelectedPids();
-      if (pids.length === 0) { showToast('请先勾选要删除的文章', true); return; }
-      document.getElementById('deleteWarn').textContent = '已选择 ' + pids.length + ' 篇文章，确认要删除吗？';
-      document.getElementById('deletePassword').value = '';
-      document.getElementById('deleteError').style.display = 'none';
-      document.getElementById('deleteOverlay').classList.add('show');
-    });
-
-    // 弹窗关闭
-    document.getElementById('deleteClose').addEventListener('click', function() {
-      document.getElementById('deleteOverlay').classList.remove('show');
-    });
-    document.getElementById('deleteCancel').addEventListener('click', function() {
-      document.getElementById('deleteOverlay').classList.remove('show');
-    });
-    document.getElementById('deleteOverlay').addEventListener('click', function(e) {
-      if (e.target === this) document.getElementById('deleteOverlay').classList.remove('show');
-    });
-
-    // 确认删除（验证密码）
-    document.getElementById('deleteConfirm').addEventListener('click', function() {
-      var password = document.getElementById('deletePassword').value;
-      if (!password) { showDeleteError('请输入密码'); return; }
-
-      var btn = this;
-      btn.disabled = true;
-      btn.textContent = '删除中...';
-
-      var pids = getSelectedPids();
-      fetch('/api/posts/batch', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pids: pids, password: password })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        btn.disabled = false;
-        btn.textContent = '确认删除';
-        if (d.ok) {
-          document.getElementById('deleteOverlay').classList.remove('show');
-          selecting = false;
-          document.getElementById('btnBatchDelete').style.display = 'inline-block';
-          document.getElementById('btnConfirmDelete').style.display = 'none';
-          document.getElementById('btnBatchCancel').style.display = 'none';
-          showToast(d.msg);
-          loadPosts();
-        } else {
-          showDeleteError(d.msg);
-        }
-      })
-      .catch(function() {
-        btn.disabled = false;
-        btn.textContent = '确认删除';
-        showDeleteError('网络错误');
-      });
-    });
-
-    function showDeleteError(msg) {
-      var el = document.getElementById('deleteError');
-      el.textContent = msg;
-      el.style.display = 'block';
-    }
-
-    function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  </script>
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Vue 3 -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<!-- DBlog 通用博客卡片组件 -->
+<script src="/js/post-card.js"></script>
+<!-- DBlog 个人主页逻辑 -->
+<script src="/js/profile.js"></script>
 
 </body>
 </html>
