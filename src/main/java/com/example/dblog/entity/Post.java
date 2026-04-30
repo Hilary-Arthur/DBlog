@@ -24,6 +24,9 @@ public class Post {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "like_count")
+    private Integer likeCount = 0;
+
     @PrePersist
     void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -47,4 +50,6 @@ public class Post {
     public void setAuthor(User author) { this.author = author; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Integer getLikeCount() { return likeCount; }
+    public void setLikeCount(Integer likeCount) { this.likeCount = likeCount; }
 }

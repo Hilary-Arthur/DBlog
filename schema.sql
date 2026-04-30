@@ -5,8 +5,7 @@
 CREATE TABLE IF NOT EXISTS `user` (
     `uid`       BIGINT AUTO_INCREMENT PRIMARY KEY,
     `account`   VARCHAR(50)  NOT NULL UNIQUE,
-    `password`  VARCHAR(128) NOT NULL,
-    `role`      VARCHAR(10)  NOT NULL DEFAULT 'user'
+    `password`  VARCHAR(128) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 用户扩展信息表（一对一关联 user）
@@ -25,6 +24,7 @@ CREATE TABLE IF NOT EXISTS `post` (
     `content`    TEXT         NOT NULL,
     `author_id`  BIGINT       NOT NULL,
     `created_at` DATETIME,
+    `like_count` INT          NOT NULL DEFAULT 0,
     FOREIGN KEY (`author_id`) REFERENCES `user`(`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -17,16 +17,17 @@
 ## 功能
 
 - **用户认证** — 注册（含图形验证码）、登录、退出，密码 SHA-256 加密存储
-- **博客管理** — 创建文章（纯文本编辑器），首页展示已审核通过的文章
-- **后台审核** — 管理员可对待审文章进行通过/驳回操作
-- **个人主页** — 查看/编辑个人资料（昵称、手机、邮箱），查看自己的文章及审核状态
-- **角色控制** — 普通用户 (user) 和管理员 (admin) 两种角色
+- **博客管理** — 创建文章（纯文本编辑器），首页分页展示已审核通过的文章（每页 6 篇）
+- **后台审核** — 管理员可对待审文章进行通过/驳回操作（管理员使用独立 `admin` 表，与用户体系分离）
+- **个人主页** — 查看/编辑个人资料（昵称、手机、邮箱），查看自己的文章及审核状态，支持批量删除文章（需密码确认）
+- **数据初始化** — 首次启动时自动生成 10 篇示例文章，确保新用户快速体验，同时自动同步 `basic_info` 记录
+- **文章归档统计** — 按月统计已发布文章数量
 
 ## 数据库表结构
 
 | 表 | 说明 |
 |------|------|
-| `user` | 用户表（uid, account, password, role） |
+| `user` | 用户表（uid, account, password） |
 | `basic_info` | 用户扩展信息（uid, uname, tel, email），一对一关联 user |
 | `admin` | 管理员表（aid, account, password），独立于 user 表 |
 | `post` | 博客文章（pid, title, content, author_id, created_at） |
@@ -66,6 +67,8 @@ cp src/main/resources/application-example.properties src/main/resources/applicat
 
 访问 http://localhost:8080/
 
+首次启动时，应用会自动创建名为 `hilary` 的用户（密码 `123456`）并生成 10 篇示例文章。
+
 ### 4. 创建管理员账号
 
 管理员系统使用独立的 `admin` 表，在 MySQL 中手动执行：
@@ -89,6 +92,14 @@ INSERT INTO admin (account, password) VALUES ('admin', SHA2('admin123', 256));
 | GET | `/api/user/me` | 获取当前登录用户 |
 | POST | `/api/logout` | 退出登录 |
 
+### 管理员认证
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/admin/login` | 管理员登录（account, password） |
+| GET | `/api/admin/me` | 获取当前登录管理员 |
+| POST | `/api/admin/logout` | 管理员退出 |
+
 ### 个人中心
 
 | 方法 | 路径 | 说明 |
@@ -102,7 +113,9 @@ INSERT INTO admin (account, password) VALUES ('admin', SHA2('admin123', 256));
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/api/posts` | 创建文章（title, content） |
-| GET | `/api/posts` | 获取所有已审核通过的文章 |
+| GET | `/api/posts` | 分页获取已审核通过的文章（`?page=1`，每页 6 篇） |
+| GET | `/api/posts/stats` | 获取文章统计（总数 + 按月分布） |
+| DELETE | `/api/posts/batch` | 批量删除自己的文章（需密码确认） |
 
 ### 管理员审核
 
@@ -116,7 +129,7 @@ INSERT INTO admin (account, password) VALUES ('admin', SHA2('admin123', 256));
 
 | 路径 | 说明 |
 |------|------|
-| `/` (`index.html`) | 博客首页，展示已审核通过的文章 |
+| `/` (`index.html`) | 博客首页，分页展示已审核通过的文章 |
 | `/editor.html` | 写博客页面（需登录） |
 | `/profile.html` | 个人主页（需登录） |
 | `/admin.html` | 审核管理页面（需管理员角色） |
@@ -126,22 +139,26 @@ INSERT INTO admin (account, password) VALUES ('admin', SHA2('admin123', 256));
 ```
 src/main/java/com/example/dblog/
 ├── DBlogApplication.java
+├── DataInitializer.java       # 数据初始化（示例文章、basic_info 同步）
 ├── entity/
-│   ├── User.java          # 用户实体
-│   ├── BasicInfo.java     # 用户扩展信息
-│   ├── Post.java          # 博客文章
-│   └── Review.java        # 审核记录
+│   ├── User.java              # 用户实体
+│   ├── BasicInfo.java         # 用户扩展信息
+│   ├── Admin.java             # 管理员实体
+│   ├── Post.java              # 博客文章
+│   └── Review.java            # 审核记录
 ├── repository/
 │   ├── UserRepository.java
 │   ├── BasicInfoRepository.java
+│   ├── AdminRepository.java
 │   ├── PostRepository.java
 │   └── ReviewRepository.java
 └── controller/
-    ├── AuthController.java    # 认证 API
-    ├── ProfileController.java # 个人中心 API
-    ├── PostController.java    # 文章 API
-    ├── AdminController.java   # 审核管理 API
-    └── CaptchaUtil.java       # 验证码生成工具
+    ├── AuthController.java        # 用户认证 API
+    ├── AdminAuthController.java   # 管理员认证 API
+    ├── ProfileController.java     # 个人中心 API
+    ├── PostController.java        # 文章 API
+    ├── AdminController.java       # 审核管理 API
+    └── CaptchaUtil.java           # 验证码生成工具
 
 src/main/resources/static/
 ├── index.html      # 首页

@@ -159,6 +159,14 @@
     .admin-dot:hover { background: var(--text-secondary); width: auto; height: auto; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; color: #94a3b8; cursor: pointer; }
     .admin-dot:hover::after { content: '管理'; }
 
+    /* 分页 */
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 24px; }
+    .page-btn { min-width: 36px; height: 36px; padding: 0 10px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 0.85rem; color: var(--text); cursor: pointer; transition: all .15s; }
+    .page-btn:hover:not(.active):not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .page-btn:disabled { opacity: 0.4; cursor: default; }
+    .page-info { font-size: 0.82rem; color: var(--text-secondary); margin: 0 8px; }
+
   </style>
 </head>
 <body>
@@ -189,7 +197,6 @@
           </div>
           <div class="dropdown" id="dropdown">
             <a href="/profile.html" class="dropdown-item">个人主页</a>
-            <a href="/profile.html" class="dropdown-item">我的文章</a>
             <hr style="border:none;border-top:1px solid var(--border);margin:4px 0;">
             <button class="dropdown-item danger" id="btnLogout">退出登录</button>
           </div>
@@ -208,16 +215,14 @@
       <div class="post-list" id="postList">
         <div class="post-card" style="text-align:center;color:var(--text-secondary);padding:40px;">加载中...</div>
       </div>
+      <div class="pagination" id="pagination"></div>
     </main>
 
     <aside class="sidebar">
       <div class="sidebar-card">
-        <h3 class="sidebar-title">分类</h3>
-        <ul class="category-list">
-          <li><span>技术</span><span class="category-count">12 篇</span></li>
-          <li><span>随笔</span><span class="category-count">8 篇</span></li>
-          <li><span>项目</span><span class="category-count">5 篇</span></li>
-          <li><span>读书笔记</span><span class="category-count">3 篇</span></li>
+        <h3 class="sidebar-title">归档</h3>
+        <ul class="category-list" id="archiveList">
+          <li><span style="color:var(--text-secondary);">加载中...</span></li>
         </ul>
       </div>
       <div class="sidebar-card">
@@ -489,23 +494,63 @@
       });
     });
 
-    // ── 加载文章列表 ──
+    // ── 加载文章列表（分页） ──
+    var currentPage = 1;
 
-    fetch('/api/posts')
+    function loadPosts(page) {
+      currentPage = page;
+      var list = document.getElementById('postList');
+      list.innerHTML = '<div class="post-card" style="text-align:center;color:var(--text-secondary);padding:40px;">加载中...</div>';
+
+      fetch('/api/posts?page=' + page)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.ok || !data.posts || data.posts.length === 0) {
+            list.innerHTML = '<div class="post-card" style="text-align:center;color:var(--text-secondary);padding:40px;">还没有文章，<a href="/editor.html" style="color:var(--accent);">写一篇</a>吧</div>';
+            document.getElementById('pagination').innerHTML = '';
+            return;
+          }
+          list.innerHTML = data.posts.map(function(p) {
+            var snippet = (p.content||'').replace(/<[^>]*>/g,'').substring(0, 150);
+            return '<article class="post-card">' +
+              '<div class="post-meta"><span>' + esc(p.createdAt) + '</span><span class="dot"></span><span>' + esc(p.author) + '</span></div>' +
+              '<h3 class="post-title"><a href="#">' + esc(p.title) + '</a></h3>' +
+              '<p class="post-excerpt">' + esc(snippet) + '</p>' +
+              '</article>';
+          }).join('');
+          renderPagination(data.totalPages, data.currentPage, data.total);
+        });
+    }
+
+    function renderPagination(totalPages, page, total) {
+      var pg = document.getElementById('pagination');
+      if (total <= 6) { pg.innerHTML = ''; return; }
+
+      var html = '';
+      html += '<button class="page-btn" onclick="loadPosts(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>&laquo;</button>';
+
+      for (var i = 1; i <= totalPages; i++) {
+        html += '<button class="page-btn' + (i === page ? ' active' : '') + '" onclick="loadPosts(' + i + ')">' + i + '</button>';
+      }
+
+      html += '<button class="page-btn" onclick="loadPosts(' + (page + 1) + ')"' + (page >= totalPages ? ' disabled' : '') + '>&raquo;</button>';
+      html += '<span class="page-info">共 ' + total + ' 篇</span>';
+      pg.innerHTML = html;
+    }
+
+    loadPosts(1);
+
+    // ── 加载归档统计 ──
+    fetch('/api/posts/stats')
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var list = document.getElementById('postList');
-        if (!data.ok || !data.posts || data.posts.length === 0) {
-          list.innerHTML = '<div class="post-card" style="text-align:center;color:var(--text-secondary);padding:40px;">还没有文章，<a href="/editor.html" style="color:var(--accent);">写一篇</a>吧</div>';
+        var list = document.getElementById('archiveList');
+        if (!data.ok || !data.months || data.months.length === 0) {
+          list.innerHTML = '<li><span style="color:var(--text-secondary);">暂无文章</span></li>';
           return;
         }
-        list.innerHTML = data.posts.map(function(p) {
-          var snippet = (p.content||'').replace(/<[^>]*>/g,'').substring(0, 150);
-          return '<article class="post-card">' +
-            '<div class="post-meta"><span>' + esc(p.createdAt) + '</span><span class="dot"></span><span>' + esc(p.author) + '</span></div>' +
-            '<h3 class="post-title"><a href="#">' + esc(p.title) + '</a></h3>' +
-            '<p class="post-excerpt">' + esc(snippet) + '</p>' +
-            '</article>';
+        list.innerHTML = data.months.map(function(m) {
+          return '<li><span>' + esc(m.label) + '</span><span class="category-count">' + m.count + ' 篇</span></li>';
         }).join('');
       });
   </script>
