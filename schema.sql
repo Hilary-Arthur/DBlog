@@ -45,3 +45,14 @@ CREATE TABLE IF NOT EXISTS `review` (
     FOREIGN KEY (`pid`)          REFERENCES `post`(`pid`),
     FOREIGN KEY (`reviewer_uid`) REFERENCES `admin`(`aid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 评论表（绑定博客文章和用户，无嵌套）
+CREATE TABLE IF NOT EXISTS `comment` (
+    `cid`        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `pid`        BIGINT       NOT NULL,
+    `uid`        BIGINT       NOT NULL,
+    `content`    TEXT         NOT NULL,
+    `created_at` DATETIME,
+    FOREIGN KEY (`pid`) REFERENCES `post`(`pid`),
+    FOREIGN KEY (`uid`) REFERENCES `user`(`uid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

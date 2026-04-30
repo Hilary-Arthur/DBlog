@@ -160,7 +160,11 @@ const app = createApp({
     }
 
     /* ── 点赞 ── */
+    const likingPids = ref(new Set());
+
     async function likePost(pid, idx) {
+      if (likingPids.value.has(pid)) return; // 防连点
+      likingPids.value.add(pid);
       try {
         const r = await fetch('/api/posts/' + pid + '/like', { method: 'POST' });
         const d = await r.json();
@@ -169,6 +173,7 @@ const app = createApp({
           posts.value[idx].likeCount = d.likeCount;
         } else if (d.msg === '请先登录') { openLogin(); }
       } catch (_) { /* ignore */ }
+      likingPids.value.delete(pid);
     }
 
     /* ── 分页范围 ── */

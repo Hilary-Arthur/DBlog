@@ -5,6 +5,7 @@ import com.example.dblog.entity.Review;
 import com.example.dblog.repository.PostRepository;
 import com.example.dblog.repository.ReviewRepository;
 import com.example.dblog.repository.UserRepository;
+import com.example.dblog.service.CommentService;
 import com.example.dblog.service.LikeService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.PageRequest;
@@ -25,13 +26,16 @@ public class PostController {
     private final ReviewRepository reviewRepo;
     private final UserRepository userRepo;
     private final LikeService likeService;
+    private final CommentService commentService;
 
     public PostController(PostRepository postRepo, ReviewRepository reviewRepo,
-                          UserRepository userRepo, LikeService likeService) {
+                          UserRepository userRepo, LikeService likeService,
+                          CommentService commentService) {
         this.postRepo = postRepo;
         this.reviewRepo = reviewRepo;
         this.userRepo = userRepo;
         this.likeService = likeService;
+        this.commentService = commentService;
     }
 
     @PostMapping
@@ -77,6 +81,7 @@ public class PostController {
             m.put("createdAt", r.getPost().getCreatedAt() != null
                     ? r.getPost().getCreatedAt().toString().substring(0, 10) : "");
             m.put("likeCount", likeService.getLikeCount(pid));
+            m.put("commentCount", commentService.getCommentCount(pid));
             posts.add(m);
         }
 
@@ -93,6 +98,32 @@ public class PostController {
                 "totalPages", pageResult.getTotalPages(),
                 "currentPage", page
         ));
+    }
+
+    @GetMapping("/{pid}")
+    public ResponseEntity<?> detail(@PathVariable Long pid, HttpSession session) {
+        var post = postRepo.findById(pid).orElse(null);
+        if (post == null) return ResponseEntity.status(404).body(Map.of("ok", false, "msg", "文章不存在"));
+
+        var review = reviewRepo.findByPostPid(pid).orElse(null);
+        if (review == null || !"APPROVED".equals(review.getStatus())) {
+            return ResponseEntity.status(404).body(Map.of("ok", false, "msg", "文章不存在"));
+        }
+
+        Long uid = getUid(session);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("pid", post.getPid());
+        result.put("title", post.getTitle());
+        result.put("content", post.getContent());
+        result.put("author", post.getAuthor().getAccount());
+        result.put("createdAt", post.getCreatedAt() != null
+                ? post.getCreatedAt().toString().substring(0, 10) : "");
+        result.put("likeCount", likeService.getLikeCount(pid));
+        result.put("liked", uid != null && likeService.isLikedBy(pid, uid));
+        result.put("commentCount", commentService.getCommentCount(pid));
+
+        return ResponseEntity.ok(Map.of("ok", true, "post", result));
     }
 
     @PostMapping("/{pid}/like")

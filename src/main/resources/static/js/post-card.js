@@ -20,7 +20,7 @@ const PostCard = {
           <span>{{ post.author }}</span>
           <slot name="meta-after"></slot>
         </div>
-        <h3 class="post-title mb-2"><a href="#">{{ post.title }}</a></h3>
+        <h3 class="post-title mb-2"><a :href="'/post.html?pid=' + post.pid">{{ post.title }}</a></h3>
         <p class="post-excerpt mb-3">{{ snippet(post.content) }}</p>
         <slot name="footer">
           <div class="post-footer d-flex align-items-center gap-3">
