@@ -3,46 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>文章 - DBlog</title>
+  <title>文章 - 星码记</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9733;</text></svg>">
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- DBlog 自定义 -->
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Prism.js 代码高亮 -->
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <!-- 星码记 自定义 -->
+  <link href="/css/index.css" rel="stylesheet">
   <link href="/css/post.css" rel="stylesheet">
+  <!-- 星码记 主题切换（尽早加载防止闪烁） -->
+  <script src="/js/theme.js"></script>
 </head>
 <body>
 
-<div id="app">
-
-  <!-- ═══ 顶部导航 ═══ -->
-  <nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container-xl px-3">
-      <a class="navbar-brand fs-5" href="/">DBlog</a>
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
-        <span class="navbar-toggler-icon"></span>
+<!-- ═══ 顶部导航 ═══ -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container-xl px-3">
+    <a class="navbar-brand" href="/">
+      <span class="brand-icon">&#9733;</span> 星码记
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navLinks">
+      <ul class="navbar-nav me-auto gap-1">
+        <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+        <li class="nav-item"><a class="nav-link" href="/posts.html">所有文章</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" title="切换主题">
+        <i class="bi bi-sun" id="themeSun"></i>
+        <i class="bi bi-moon" id="themeMoon" style="display:none;"></i>
       </button>
-      <div class="collapse navbar-collapse" id="navLinks">
-        <ul class="navbar-nav me-auto gap-1">
-          <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
-          <li class="nav-item"><a class="nav-link" href="/profile.html">个人主页</a></li>
-        </ul>
-        <div class="d-flex align-items-center gap-3">
-          <div class="dropdown" v-if="loggedIn">
-            <div class="d-flex align-items-center gap-2 user-dropdown px-2 py-1 rounded-2"
-                 data-bs-toggle="dropdown" aria-expanded="false">
-              <div class="avatar-sm">{{ avatarLetter }}</div>
-              <span class="d-none d-md-inline" style="font-size:0.88rem;font-weight:500;">{{ account }}</span>
-            </div>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="/profile.html">个人主页</a></li>
-              <li><hr class="dropdown-divider my-1"></li>
-              <li><button class="dropdown-item text-danger" @click="doLogout">退出登录</button></li>
-            </ul>
-          </div>
-          <a v-else href="#" @click.prevent="openLogin" class="btn btn-dark btn-sm rounded-3 fw-semibold px-3">登录</a>
-        </div>
+      <div class="search-box" id="searchBox">
+        <button class="search-toggle" id="searchToggle"><i class="bi bi-search"></i></button>
+        <form class="search-form" id="searchForm" onsubmit="return false;">
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索文章..." autocomplete="off">
+        </form>
       </div>
     </div>
-  </nav>
+  </div>
+</nav>
+
+<div id="app">
 
   <!-- ═══ 主体 ═══ -->
   <div class="container-xl px-3 py-4">
@@ -54,7 +59,7 @@
 
         <!-- 文章不存在 -->
         <div v-else-if="notFound" class="text-center py-5">
-          <p class="text-secondary mb-3">文章不存在或未发布</p>
+          <p class="text-secondary mb-3">文章不存在</p>
           <a href="/" class="btn btn-outline-secondary btn-sm">返回首页</a>
         </div>
 
@@ -63,141 +68,44 @@
           <div class="post-head">
             <h1>{{ post.title }}</h1>
             <div class="post-meta d-flex align-items-center gap-2">
-              <span>{{ post.author }}</span>
-              <span class="meta-dot"></span>
               <span>{{ post.createdAt }}</span>
+              <span class="meta-dot"></span>
+              <span><i class="bi bi-clock"></i> {{ readingTime }}</span>
             </div>
           </div>
 
-          <div class="post-body">{{ post.content }}</div>
+          <div class="post-body" v-html="renderedContent"></div>
 
-          <div class="post-actions d-flex align-items-center gap-3">
-            <button class="like-btn" :class="{ liked: post.liked }" @click="toggleLike">
-              <svg v-if="post.liked" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              <span>{{ post.likeCount || 0 }}</span>
-            </button>
-            <span class="d-flex align-items-center gap-1" style="font-size:0.88rem;color:var(--dblog-text-secondary);">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 评论
-            </span>
-          </div>
-
-          <!-- 评论占位 -->
-          <div class="comment-section">
-            <h3 class="fs-6 fw-bold mb-3">评论 ({{ commentCount }})</h3>
-
-            <!-- 评论输入 -->
-            <div v-if="loggedIn" class="mb-4">
-              <textarea v-model="newComment" class="form-control mb-2" rows="3"
-                        placeholder="写下你的评论..." maxlength="1000"></textarea>
-              <div class="d-flex align-items-center justify-content-between">
-                <span class="comment-hint">{{ newComment.length }}/1000</span>
-                <button class="btn btn-dark btn-sm" @click="submitComment"
-                        :disabled="!newComment.trim() || submitting">发表评论</button>
-              </div>
-              <div v-if="commentError" class="text-danger mt-1" style="font-size:0.85rem;">{{ commentError }}</div>
-            </div>
-            <div v-else class="mb-4 p-3 text-center rounded-3" style="background:#f8fafc;">
-              <span class="text-secondary" style="font-size:0.9rem;">请先 </span>
-              <a href="#" @click.prevent="openLogin" style="color:var(--dblog-accent);">登录</a>
-              <span class="text-secondary" style="font-size:0.9rem;"> 后发表评论</span>
-            </div>
-
-            <!-- 评论列表 -->
-            <div v-if="comments.length === 0" class="text-center text-secondary py-4" style="font-size:0.9rem;">
-              暂无评论，来说点什么吧
-            </div>
-            <div v-for="c in comments" :key="c.cid || c.createdAt" class="comment-item d-flex gap-3 py-3 border-top">
-              <div class="comment-avatar rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
-                {{ c.author.charAt(0).toUpperCase() }}
-              </div>
-              <div class="flex-grow-1 min-w-0">
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <span class="fw-semibold" style="font-size:0.9rem;">{{ c.author }}</span>
-                  <span style="font-size:0.78rem;color:var(--dblog-text-secondary);">{{ c.createdAt }}</span>
-                  <span v-if="c.pending" class="badge bg-warning text-dark" style="font-size:0.7rem;">待同步</span>
-                </div>
-                <p class="mb-1" style="font-size:0.92rem;line-height:1.6;white-space:pre-wrap;">{{ c.content }}</p>
-                <button v-if="!c.pending && c.uid === currentUid"
-                        class="btn btn-link btn-sm p-0 text-danger mt-1" style="font-size:0.78rem;"
-                        @click="deleteComment(c.cid)">删除</button>
-              </div>
-            </div>
+          <div class="post-footer">
+            <a href="/" class="back-link">&larr; 返回首页</a>
           </div>
         </article>
 
       </div>
-    </div>
-  </div>
 
-  <!-- ═══ Toast ═══ -->
-  <div v-if="toastVisible" class="position-fixed top-0 start-50 translate-middle-x mt-3 z-3"
-       style="background:#334155;color:#fff;padding:10px 24px;border-radius:8px;font-size:0.88rem;box-shadow:0 4px 16px rgba(0,0,0,.15);">
-    {{ toastMsg }}
-  </div>
-
-  <!-- ═══ 登录弹窗 ═══ -->
-  <div v-if="showLoginModal" class="modal-backdrop fade show" @click="closeModals"></div>
-  <div class="modal fade" :class="{ 'show d-block': showLoginModal }" tabindex="-1" @click.self="closeModals">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content border-0 rounded-4 shadow-lg">
-        <div class="modal-header border-0 px-4 pt-4">
-          <h2 class="modal-title fs-5 fw-bold">登录</h2>
-          <button type="button" class="btn-close" @click="closeModals"></button>
-        </div>
-        <div class="modal-body px-4 pb-4">
-          <form @submit.prevent="doLogin" autocomplete="off">
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">账号</label>
-              <input type="text" class="form-control" v-model="loginAccount" placeholder="请输入账号" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
-              <input type="password" class="form-control" v-model="loginPassword" placeholder="请输入密码" required>
-            </div>
-            <div v-if="loginError" class="text-danger mb-3" style="font-size:0.8rem;">{{ loginError }}</div>
-            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">登 录</button>
-          </form>
-          <p class="text-center mt-2 mb-0">
-            <a href="#" @click.prevent="switchToRegister" style="font-size:0.85rem;">没有账号？去注册</a>
-          </p>
-        </div>
+      <!-- 右侧目录导航 -->
+      <div class="col-lg-4 d-none d-lg-block" v-if="tocItems.length">
+        <aside class="toc-sidebar">
+          <h4 class="toc-sidebar-title"><i class="bi bi-list-nested"></i> 目录</h4>
+          <nav class="toc-list">
+            <a v-for="t in tocItems" :key="t.id" :href="'#'+t.id"
+               :class="['toc-link', 'toc-level-'+t.level, {active: activeId===t.id}]"
+               @click.prevent="scrollTo(t.id)">{{ t.text }}</a>
+          </nav>
+        </aside>
       </div>
     </div>
-  </div>
 
-  <!-- ═══ 注册弹窗 ═══ -->
-  <div v-if="showRegisterModal" class="modal-backdrop fade show" @click="closeModals"></div>
-  <div class="modal fade" :class="{ 'show d-block': showRegisterModal }" tabindex="-1" @click.self="closeModals">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content border-0 rounded-4 shadow-lg">
-        <div class="modal-header border-0 px-4 pt-4">
-          <h2 class="modal-title fs-5 fw-bold">注册</h2>
-          <button type="button" class="btn-close" @click="closeModals"></button>
-        </div>
-        <div class="modal-body px-4 pb-4">
-          <form @submit.prevent="doRegister" autocomplete="off">
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">账号</label>
-              <input type="text" class="form-control" v-model="regAccount" placeholder="请输入账号" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
-              <input type="password" class="form-control" v-model="regPassword" placeholder="请输入密码" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">验证码</label>
-              <div class="input-group">
-                <input type="text" class="form-control" v-model="regCaptcha" placeholder="请输入验证码" required>
-                <img :src="captchaSrc" @click="refreshCaptcha" style="cursor:pointer;height:38px;" title="点击刷新">
-              </div>
-            </div>
-            <div v-if="registerError" class="text-danger mb-3" style="font-size:0.8rem;">{{ registerError }}</div>
-            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">注 册</button>
-          </form>
-          <p class="text-center mt-2 mb-0">
-            <a href="#" @click.prevent="switchToLogin" style="font-size:0.85rem;">已有账号？去登录</a>
-          </p>
+    <!-- 推荐文章（文章下方） -->
+    <div v-if="recommended.length" class="recommend-section">
+      <h4 class="recommend-section-title"><i class="bi bi-stars"></i> 推荐文章</h4>
+      <div class="row g-3">
+        <div v-for="r in recommended" :key="r.hash" class="col-md-4">
+          <a :href="'/p/' + r.hash" class="recommend-card">
+            <div class="recommend-card-title">{{ r.title }}</div>
+            <div class="recommend-card-meta">{{ r.createdAt }}</div>
+            <div class="recommend-card-snippet">{{ r.snippet }}</div>
+          </a>
         </div>
       </div>
     </div>
@@ -205,12 +113,36 @@
 
 </div>
 
+<!-- 回到顶部按钮 -->
+<button class="back-to-top" id="backToTop" title="回到顶部">
+  <i class="bi bi-arrow-up"></i>
+</button>
+
 <!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Vue 3 -->
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-<!-- DBlog 文章详情逻辑 -->
+<!-- Prism.js 代码高亮 -->
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markdown.min.js"></script>
+<!-- 星码记 文章详情逻辑 -->
 <script src="/js/post.js"></script>
+<!-- 星码记 代码复制 -->
+<script src="/js/code-highlight.js"></script>
+<!-- 星码记 搜索交互 -->
+<script src="/js/search.js"></script>
+
+<div class="icp-footer">
+  <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">蜀ICP备2026025849号</a>
+</div>
 
 </body>
 </html>

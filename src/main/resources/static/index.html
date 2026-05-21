@@ -3,225 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DBlog - 博客</title>
+  <title>星码记 - 博客</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9733;</text></svg>">
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- DBlog 自定义 -->
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- 星码记 自定义 -->
   <link href="/css/index.css" rel="stylesheet">
-  <!-- DBlog 通用博客卡片 -->
+  <!-- 星码记 通用博客卡片 -->
   <link href="/css/post-card.css" rel="stylesheet">
+  <!-- 星码记 主题切换（尽早加载防止闪烁） -->
+  <script src="/js/theme.js"></script>
 </head>
 <body>
 
-<div id="app">
-
-  <!-- ═══ 顶部导航 ═══ -->
-  <nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container-xl px-3">
-      <a class="navbar-brand fs-5" href="/">DBlog</a>
-
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
-        <span class="navbar-toggler-icon"></span>
+<!-- ═══ 顶部导航 ═══ -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container-xl px-3">
+    <a class="navbar-brand" href="/">
+      <span class="brand-icon">&#9733;</span> 星码记
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navLinks">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navLinks">
+      <ul class="navbar-nav me-auto gap-1">
+        <li class="nav-item"><a class="nav-link active" href="/">首页</a></li>
+        <li class="nav-item"><a class="nav-link" href="/posts.html">所有文章</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" title="切换主题">
+        <i class="bi bi-sun" id="themeSun"></i>
+        <i class="bi bi-moon" id="themeMoon" style="display:none;"></i>
       </button>
-
-      <div class="collapse navbar-collapse" id="navLinks">
-        <ul class="navbar-nav me-auto gap-1">
-          <li class="nav-item"><a class="nav-link active" href="/">首页</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">技术</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">随笔</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">关于</a></li>
-        </ul>
-
-        <div class="d-flex align-items-center gap-3">
-          <!-- 写博客按钮 -->
-          <a href="/editor.html" class="btn btn-dark btn-sm rounded-3 fw-semibold btn-create-post">
-            <span style="font-size:1.15rem;line-height:1;">+</span> 写博客
-          </a>
-
-          <!-- 已登录 -->
-          <div class="dropdown" v-if="loggedIn">
-            <div class="d-flex align-items-center gap-2 user-dropdown px-2 py-1 rounded-2"
-                 data-bs-toggle="dropdown" aria-expanded="false">
-              <div class="avatar-sm">{{ avatarLetter }}</div>
-              <span class="d-none d-md-inline" style="font-size:0.88rem;font-weight:500;">{{ account }}</span>
-            </div>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="/profile.html">个人主页</a></li>
-              <li><hr class="dropdown-divider my-1"></li>
-              <li><button class="dropdown-item text-danger" @click="doLogout">退出登录</button></li>
-            </ul>
-          </div>
-
-          <!-- 未登录 -->
-          <button class="btn btn-dark btn-sm rounded-3 fw-semibold px-3" v-if="!loggedIn" @click="openLogin">登录</button>
-        </div>
+      <div class="search-box" id="searchBox">
+        <button class="search-toggle" id="searchToggle"><i class="bi bi-search"></i></button>
+        <form class="search-form" id="searchForm" onsubmit="return false;">
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索文章..." autocomplete="off">
+        </form>
       </div>
     </div>
-  </nav>
+  </div>
+</nav>
+
+<div id="app">
 
   <!-- ═══ 主体 ═══ -->
   <div class="container-xl px-3 py-4">
-    <div class="row g-4">
+    <div class="post-list-wrapper">
+      <div class="section-header mb-3">
+        <h2 class="section-title">推荐文章</h2>
+      </div>
+
+      <!-- 加载中 -->
+      <div v-if="loading" class="text-center text-secondary py-5">加载中...</div>
+
+      <!-- 空状态 -->
+      <div v-else-if="posts.length === 0" class="text-center text-secondary py-5">
+        还没有文章
+      </div>
+
       <!-- 文章列表 -->
-      <main class="col-lg-8">
-        <h2 class="fs-5 fw-bold mb-3">最新文章</h2>
-
-        <!-- 加载中 -->
-        <div v-if="loading" class="text-center text-secondary py-5">加载中...</div>
-
-        <!-- 空状态 -->
-        <div v-else-if="posts.length === 0" class="text-center text-secondary py-5">
-          还没有文章，<a href="/editor.html" style="color:var(--dblog-accent);">写一篇</a>吧
-        </div>
-
-        <!-- 文章列表 -->
-        <div v-else class="post-list">
-          <post-card v-for="(p, idx) in posts" :key="p.pid" :post="p" @like="likePost($event, idx)"></post-card>
-        </div>
-
-        <!-- 分页 -->
-        <nav v-if="showPagination" class="mt-4">
-          <ul class="pagination justify-content-center">
-            <li class="page-item" :class="{ disabled: currentPage <= 1 }">
-              <a class="page-link" href="#" @click.prevent="currentPage > 1 && loadPosts(currentPage - 1)">&laquo;</a>
-            </li>
-            <li v-for="p in pageNumbers" :key="p" class="page-item" :class="{ active: p === currentPage }">
-              <a class="page-link" href="#" @click.prevent="loadPosts(p)">{{ p }}</a>
-            </li>
-            <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
-              <a class="page-link" href="#" @click.prevent="currentPage < totalPages && loadPosts(currentPage + 1)">&raquo;</a>
-            </li>
-            <li class="page-item disabled"><span class="page-link border-0 bg-transparent" style="font-size:0.82rem;color:var(--dblog-text-secondary);">共 {{ totalPages }} 页</span></li>
-          </ul>
-        </nav>
-      </main>
-
-      <!-- 侧栏 -->
-      <aside class="col-lg-4">
-        <div class="sidebar-card mb-3">
-          <h3 class="sidebar-title mb-3">归档</h3>
-          <ul class="list-unstyled mb-0 archive-list">
-            <li v-if="archives.length === 0" style="color:var(--dblog-text-secondary);">暂无文章</li>
-            <li v-for="m in archives" :key="m.label">
-              <span>{{ m.label }}</span>
-              <span class="archive-count">{{ m.count }} 篇</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="sidebar-card">
-          <h3 class="sidebar-title mb-3">标签</h3>
-          <div class="tag-cloud">
-            <a href="#" class="badge py-1 px-2">Spring Boot</a>
-            <a href="#" class="badge py-1 px-2">Java</a>
-            <a href="#" class="badge py-1 px-2">REST API</a>
-            <a href="#" class="badge py-1 px-2">开源</a>
-            <a href="#" class="badge py-1 px-2">远程办公</a>
-            <a href="#" class="badge py-1 px-2">性能优化</a>
-          </div>
-        </div>
-      </aside>
+      <div v-else class="post-list">
+        <post-card v-for="(p, idx) in posts" :key="p.pid" :post="p"></post-card>
+      </div>
     </div>
   </div>
 
-  <!-- ═══ 页脚（含隐藏管理入口） ═══ -->
+  <!-- ═══ 页脚 ═══ -->
   <footer class="text-center py-3" style="font-size:0.78rem;color:var(--dblog-text-secondary);">
-    &copy; 2026 DBlog<span class="admin-dot" @click="openAdmin" title=""></span>
+    &copy; 2026 星码记
   </footer>
-
-  <!-- ═══ 模态框 backdrop ═══ -->
-  <div v-if="showLoginModal || showRegisterModal || showAdminModal" class="modal-backdrop fade show" @click="closeModals"></div>
-
-  <!-- ═══ 登录弹窗 ═══ -->
-  <div class="modal fade" :class="{ 'show d-block': showLoginModal }" tabindex="-1" @click.self="closeModals">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content border-0 rounded-4 shadow-lg">
-        <div class="modal-header border-0 px-4 pt-4">
-          <h2 class="modal-title fs-5 fw-bold">登录</h2>
-          <button type="button" class="btn-close" @click="closeModals"></button>
-        </div>
-        <div class="modal-body px-4 pb-4">
-          <form @submit.prevent="doLogin" autocomplete="off">
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">账号</label>
-              <input type="text" class="form-control" v-model="loginAccount" placeholder="请输入账号" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
-              <input type="password" class="form-control" v-model="loginPassword" placeholder="请输入密码" required>
-            </div>
-            <div v-if="loginError" class="text-danger mb-3" style="font-size:0.8rem;">{{ loginError }}</div>
-            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">登 录</button>
-          </form>
-          <div class="text-center mt-3" style="font-size:0.85rem;color:var(--dblog-text-secondary);">
-            还没有账号？<a href="#" @click.prevent="switchToRegister" style="color:var(--dblog-accent);">立即注册</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ 注册弹窗 ═══ -->
-  <div class="modal fade" :class="{ 'show d-block': showRegisterModal }" tabindex="-1" @click.self="closeModals">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content border-0 rounded-4 shadow-lg">
-        <div class="modal-header border-0 px-4 pt-4">
-          <h2 class="modal-title fs-5 fw-bold">注册</h2>
-          <button type="button" class="btn-close" @click="closeModals"></button>
-        </div>
-        <div class="modal-body px-4 pb-4">
-          <form @submit.prevent="doRegister" autocomplete="off">
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">账号</label>
-              <input type="text" class="form-control" v-model="regAccount" placeholder="3-20个字符" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
-              <input type="password" class="form-control" v-model="regPassword" placeholder="至少6位密码" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">验证码</label>
-              <div class="d-flex gap-2">
-                <input type="text" class="form-control" v-model="regCaptcha" placeholder="请输入验证码" maxlength="4" required>
-                <img :src="captchaSrc" alt="验证码" class="captcha-img" @click="refreshCaptcha" title="点击刷新">
-              </div>
-            </div>
-            <div v-if="registerError" class="text-danger mb-3" style="font-size:0.8rem;">{{ registerError }}</div>
-            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">注 册</button>
-          </form>
-          <div class="text-center mt-3" style="font-size:0.85rem;color:var(--dblog-text-secondary);">
-            已有账号？<a href="#" @click.prevent="switchToLogin" style="color:var(--dblog-accent);">去登录</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ 管理员登录弹窗 ═══ -->
-  <div class="modal fade" :class="{ 'show d-block': showAdminModal }" tabindex="-1" @click.self="showAdminModal = false">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content border-0 rounded-4 shadow-lg">
-        <div class="modal-header border-0 px-4 pt-4">
-          <h2 class="modal-title fs-5 fw-bold">管理员登录</h2>
-          <button type="button" class="btn-close" @click="showAdminModal = false"></button>
-        </div>
-        <div class="modal-body px-4 pb-4">
-          <form @submit.prevent="doAdminLogin" autocomplete="off">
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">管理员账号</label>
-              <input type="text" class="form-control" v-model="adminAccount" placeholder="请输入管理员账号" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.85rem;">密码</label>
-              <input type="password" class="form-control" v-model="adminPassword" placeholder="请输入密码" required>
-            </div>
-            <div v-if="adminError" class="text-danger mb-3" style="font-size:0.8rem;">{{ adminError }}</div>
-            <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">登 录</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
 
 </div>
 
@@ -229,10 +81,16 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Vue 3 -->
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-<!-- DBlog 通用博客卡片组件 -->
+<!-- 星码记 通用博客卡片组件 -->
 <script src="/js/post-card.js"></script>
-<!-- DBlog 首页逻辑 -->
+<!-- 星码记 首页逻辑 -->
 <script src="/js/index.js"></script>
+<!-- 星码记 搜索交互 -->
+<script src="/js/search.js"></script>
+
+<div class="icp-footer">
+  <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">蜀ICP备2026025849号</a>
+</div>
 
 </body>
 </html>
