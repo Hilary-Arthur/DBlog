@@ -81,6 +81,30 @@ body {
 .nav-link:hover { color: var(--dblog-dark) !important; background: var(--dblog-accent-light); }
 .nav-link.active { color: #0284c7 !important; background: var(--dblog-accent-light); font-weight: 600; }
 
+/* ── 导航栏下拉菜单 ── */
+.nav-dropdown { position: relative; }
+.nav-dropdown .nav-link { display: flex; align-items: center; gap: 4px; }
+.nav-dropdown .dropdown-menu {
+  border: 1px solid var(--dblog-border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 6px;
+  background: var(--dblog-surface); min-width: 180px;
+  margin-top: 4px; animation: nav-dd-in .2s ease;
+}
+@keyframes nav-dd-in { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.nav-dropdown .dropdown-item {
+  border-radius: 7px; padding: 8px 14px; font-size: 0.88rem;
+  color: var(--dblog-text-secondary); transition: all .15s;
+}
+.nav-dropdown .dropdown-item:hover {
+  background: var(--dblog-accent-light); color: var(--dblog-dark);
+}
+.nav-dropdown .dropdown-item.active {
+  background: var(--dblog-accent); color: #fff;
+}
+[data-theme="dark"] .nav-dropdown .dropdown-menu {
+  background: var(--dblog-surface); border-color: var(--dblog-border);
+}
+
 /* ── 文章列表区域 ── */
 .post-list-wrapper { max-width: 100%; }
 .section-header { display: flex; align-items: center; justify-content: space-between; }
